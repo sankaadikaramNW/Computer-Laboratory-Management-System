@@ -18,17 +18,23 @@
 
     <!-- LEFT PANEL — Branding -->
     <div class="login-left">
-        <i class="bi bi-shield-fill-check mb-4" style="font-size:4rem;color:rgba(255,255,255,0.9);"></i>
+        <!-- SLAF Crest -->
+        <img src="<?php echo URLROOT; ?>images/Picture1.png"
+             alt="SLAF Crest"
+             style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.35));margin-bottom:1.5rem;"
+             onerror="this.style.display='none';document.getElementById('crest-fallback').style.display='block';"
+        >
+        <i id="crest-fallback" class="bi bi-shield-fill-check" style="display:none;font-size:4rem;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;"></i>
         <h1>SLAF Trade Training School</h1>
         <p class="mt-2">Computer Laboratory Management System — Ekala</p>
         <div class="mt-4 d-flex flex-column gap-3" style="max-width:300px;text-align:left;">
             <div class="d-flex align-items-start gap-3">
                 <i class="bi bi-calendar-check-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
-                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Schedule & manage laboratory allocations</span>
+                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Schedule &amp; manage laboratory allocations</span>
             </div>
             <div class="d-flex align-items-start gap-3">
                 <i class="bi bi-pc-display-horizontal mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
-                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Track equipment, faults & maintenance</span>
+                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Track equipment, faults &amp; maintenance</span>
             </div>
             <div class="d-flex align-items-start gap-3">
                 <i class="bi bi-people-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
@@ -42,7 +48,11 @@
         <div class="login-card">
 
             <div class="login-header">
-                <i class="bi bi-grid-3x3-gap-fill" style="font-size:2.2rem;color:var(--primary);"></i>
+                <img src="<?php echo URLROOT; ?>images/Picture1.png"
+                     alt="SLAF Crest"
+                     style="width:64px;height:64px;object-fit:contain;"
+                     onerror="this.outerHTML='<i class=\'bi bi-grid-3x3-gap-fill\' style=\'font-size:2.2rem;color:var(--primary);\'></i>';"
+                >
                 <h4 class="mt-3 mb-1">Welcome back</h4>
                 <p>Sign in to your SLAF CLMS account</p>
             </div>
@@ -62,7 +72,7 @@
                         <input type="text" name="username" id="username"
                             class="form-control"
                             style="border-left:none;border:1.5px solid var(--border);border-left:none;"
-                            placeholder="e.g. admin or sgt.wijesinghe" required autofocus>
+                            placeholder="e.g. admin or instructor" required autofocus>
                     </div>
                 </div>
 

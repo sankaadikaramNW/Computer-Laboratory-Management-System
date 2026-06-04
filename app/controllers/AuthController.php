@@ -31,6 +31,16 @@ class AuthController extends Controller {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Get client IP address
+            $ipAddress = '127.0.0.1';
+            if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+                $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
+            } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+                $ipAddress = $_SERVER['REMOTE_ADDR'];
+            }
+
             // 1. Verify CSRF Token
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('login_error', 'Invalid security token. Please try again.', 'alert alert-danger');
@@ -42,16 +52,17 @@ class AuthController extends Controller {
             $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $password = $_POST['password'] ?? '';
             
-            // Get IP Address
-            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-
             // 3. Brute Force Check (Max 5 attempts in 10 minutes)
             $attempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
-            if ($attempts >= 5) {
+            
+            // Also check DB column failed_attempts
+            $dbUser = $this->userModel->findUserByUsername($username);
+            $dbFailedAttempts = $dbUser ? (int)$dbUser->failed_attempts : 0;
+            
+            if ($attempts >= 5 || $dbFailedAttempts >= 5) {
                 // Lock the account if it exists
-                $user = $this->userModel->findUserByUsername($username);
-                if ($user && $user->status !== 'locked') {
-                    $this->userModel->lockAccount($username);
+                if ($dbUser && $dbUser->status !== 'locked') {
+                    $this->userModel->lockUserAccount($dbUser->id);
                     $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts from IP {$ipAddress}");
                 }
                 
@@ -75,14 +86,34 @@ class AuthController extends Controller {
                     return;
                 }
 
-                // Successful login -> Clear login attempts log
+                // Check password expiry
+                $passwordExpired = false;
+                if ($user->last_password_change && $user->password_expiry_days > 0) {
+                    $lastChange = strtotime($user->last_password_change);
+                    $expiryDays = (int)$user->password_expiry_days;
+                    if (time() > $lastChange + ($expiryDays * 24 * 60 * 60)) {
+                        $passwordExpired = true;
+                    }
+                }
+
+                // Check force password change requirement
+                $mustChangePassword = ((int)$user->force_password_change === 1) || $passwordExpired;
+
+                // Successful login -> Clear login attempts log and reset failed attempts column
                 $this->userModel->clearLoginAttempts($ipAddress, $username);
+                $this->userModel->resetFailedAttempts($username);
 
                 // Set session variables
                 $_SESSION['user_id'] = $user->id;
                 $_SESSION['username'] = $user->username;
                 $_SESSION['user_role_id'] = (int)$user->role_id;
                 $_SESSION['user_role_name'] = $user->role_name;
+                $_SESSION['last_activity'] = time();
+
+                // Set password change flag in session if needed
+                if ($mustChangePassword) {
+                    $_SESSION['must_change_password'] = true;
+                }
 
                 // Load Instructor details if role is Instructor
                 if ($user->role_id === 2) {
@@ -102,8 +133,11 @@ class AuthController extends Controller {
                 // Log Activity
                 $this->logActivity('LOGIN', 'AUTH', "User '{$username}' logged in successfully.");
 
-                // Redirect based on role
-                if ($user->role_id === 1) {
+                // Redirect based on role and security status
+                if ($mustChangePassword) {
+                    flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
+                    redirect('auth/changePassword');
+                } elseif ($user->role_id === 1) {
                     redirect('dashboard/admin');
                 } else {
                     redirect('dashboard/instructor');
@@ -111,13 +145,174 @@ class AuthController extends Controller {
             } else {
                 // Failed login -> Track attempt
                 $this->userModel->trackLoginAttempt($ipAddress, $username);
+                $isNowLocked = $this->userModel->incrementFailedAttempts($username);
                 
-                flash('login_error', 'Invalid username or password. Remaining attempts: ' . (5 - ($attempts + 1)), 'alert alert-danger');
+                $currentAttempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
+                if ($isNowLocked) {
+                    $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts.");
+                    flash('login_error', 'Account locked due to too many failed attempts. Contact Administrator.', 'alert alert-danger');
+                } else {
+                    flash('login_error', 'Invalid username or password. Remaining attempts: ' . (5 - $currentAttempts), 'alert alert-danger');
+                }
                 $this->view('auth/login');
             }
         } else {
             // Load Login Form
             $this->view('auth/login');
+        }
+    }
+
+    /**
+     * Self-Service Password Change (Admin / Instructor — inside dashboard layout)
+     */
+    public function myPassword() {
+        if (!isLoggedIn()) {
+            redirect('auth/login');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Verify CSRF Token
+            if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+                flash('change_password_error', 'Invalid security token. Please try again.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword     = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+                flash('change_password_error', 'All fields are required.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+
+            if ($newPassword !== $confirmPassword) {
+                flash('change_password_error', 'New passwords do not match.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+
+            if (strlen($newPassword) < 8) {
+                flash('change_password_error', 'New password must be at least 8 characters long.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+
+            // Verify current password
+            $user = $this->userModel->getUserById($_SESSION['user_id']);
+            if (!password_verify($currentPassword, $user->password)) {
+                flash('change_password_error', 'Current password is incorrect.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+
+            // Validate against password history
+            $history = $this->userModel->getPasswordHistory($user->id);
+            foreach ($history as $h) {
+                if (password_verify($newPassword, $h->password_hash)) {
+                    flash('change_password_error', 'You cannot reuse a password you have used in the past.', 'alert alert-danger');
+                    redirect('auth/myPassword');
+                }
+            }
+
+            // Save new password (force_password_change = 0, already chosen by user)
+            if ($this->userModel->resetPassword($user->id, $newPassword, 0)) {
+                unset($_SESSION['must_change_password']);
+                $this->logActivity('PASSWORD_CHANGED', 'AUTH', "User '{$user->username}' changed their own password.");
+                flash('dashboard_success', 'Password changed successfully.', 'alert alert-success alert-dismissible fade show');
+                if (isAdmin()) {
+                    redirect('dashboard/admin');
+                } else {
+                    redirect('dashboard/instructor');
+                }
+            } else {
+                flash('change_password_error', 'Failed to update password. Please try again.', 'alert alert-danger');
+                redirect('auth/myPassword');
+            }
+        } else {
+            $data = [
+                'title'       => 'Change My Password',
+                'active_menu' => 'my_password',
+            ];
+            $this->view('templates/header', $data);
+            $this->view('auth/my_password', $data);
+            $this->view('templates/footer');
+        }
+    }
+
+    /**
+     * Handle Forced / Standard Password Change
+     */
+    public function changePassword() {
+        if (!isLoggedIn()) {
+            redirect('auth/login');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Verify CSRF Token
+            if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+                flash('change_password_error', 'Invalid security token. Please try again.', 'alert alert-danger');
+                $this->view('auth/change_password');
+                return;
+            }
+
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+                flash('change_password_error', 'All fields are required.', 'alert alert-danger');
+                $this->view('auth/change_password');
+                return;
+            }
+
+            if ($newPassword !== $confirmPassword) {
+                flash('change_password_error', 'New passwords do not match.', 'alert alert-danger');
+                $this->view('auth/change_password');
+                return;
+            }
+
+            if (strlen($newPassword) < 8) {
+                flash('change_password_error', 'New password must be at least 8 characters long.', 'alert alert-danger');
+                $this->view('auth/change_password');
+                return;
+            }
+
+            // Authenticate with current password
+            $user = $this->userModel->getUserById($_SESSION['user_id']);
+            if (!password_verify($currentPassword, $user->password)) {
+                flash('change_password_error', 'Current password is incorrect.', 'alert alert-danger');
+                $this->view('auth/change_password');
+                return;
+            }
+
+            // Validate against password history
+            $history = $this->userModel->getPasswordHistory($user->id);
+            foreach ($history as $h) {
+                if (password_verify($newPassword, $h->password_hash)) {
+                    flash('change_password_error', 'You cannot reuse a password you have used in the past.', 'alert alert-danger');
+                    $this->view('auth/change_password');
+                    return;
+                }
+            }
+
+            // Save new password
+            if ($this->userModel->resetPassword($user->id, $newPassword, 0)) {
+                // Clear the session flag
+                unset($_SESSION['must_change_password']);
+                
+                $this->logActivity('PASSWORD_CHANGED', 'AUTH', "User changed password.");
+                
+                flash('dashboard_success', 'Password changed successfully.', 'alert alert-success alert-dismissible fade show');
+                
+                if ($user->role_id === 1) {
+                    redirect('dashboard/admin');
+                } else {
+                    redirect('dashboard/instructor');
+                }
+            } else {
+                flash('change_password_error', 'Failed to update password. Please try again.', 'alert alert-danger');
+                $this->view('auth/change_password');
+            }
+        } else {
+            $this->view('auth/change_password');
         }
     }
 
@@ -142,7 +337,6 @@ class AuthController extends Controller {
         session_destroy();
 
         // Redirect with success message
-        // Start a fresh session to hold the flash message
         session_start();
         flash('login_success', 'You have been logged out successfully.', 'alert alert-success');
         redirect('auth/login');

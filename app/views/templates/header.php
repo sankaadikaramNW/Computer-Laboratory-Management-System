@@ -32,7 +32,10 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <i class="bi bi-shield-fill-check text-white me-2 fs-3"></i>
+            <img src="<?php echo URLROOT; ?>images/Picture1.png"
+                 alt="SLAF Crest"
+                 style="width:38px;height:38px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.3));"
+                 onerror="this.outerHTML='<i class=\'bi bi-shield-fill-check text-white me-2 fs-3\'></i>';">
             <div class="sidebar-brand-text">
                 <span class="d-block fs-6 fw-bold"><?php echo e(MILITARY_BRANCH); ?></span>
                 <span class="d-block text-muted" style="font-size: 0.7rem; font-weight: 500; letter-spacing: 0px; text-transform: uppercase;">CLMS Ekala</span>
@@ -50,12 +53,19 @@
                     </a>
                 </li>
                 
-                <li class="sidebar-menu-header">Personnel & Syllabus</li>
+                <li class="sidebar-menu-header">Instructor Management</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'instructors') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>instructor" class="sidebar-link">
-                        <i class="bi bi-people-fill"></i> Instructors
+                        <i class="bi bi-people-fill"></i> View Instructors
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'register_instructor') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>instructor/register" class="sidebar-link">
+                        <i class="bi bi-person-plus-fill"></i> Register Instructor
+                    </a>
+                </li>
+
+                <li class="sidebar-menu-header">Syllabus</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'lessons') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>lesson" class="sidebar-link">
                         <i class="bi bi-book-half"></i> Syllabus Lessons
@@ -116,6 +126,18 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu-header">Administration</li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'user_management') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>user" class="sidebar-link">
+                        <i class="bi bi-people-fill"></i> User Management
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_password') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myPassword" class="sidebar-link">
+                        <i class="bi bi-key-fill"></i> Change My Password
+                    </a>
+                </li>
+
                 <li class="sidebar-menu-header">System Administration</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'notices') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>notice" class="sidebar-link">
@@ -158,6 +180,11 @@
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'profile') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>instructor/profile" class="sidebar-link">
                         <i class="bi bi-person-gear"></i> Update Contact
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_password') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myPassword" class="sidebar-link">
+                        <i class="bi bi-key-fill"></i> Change My Password
                     </a>
                 </li>
             <?php endif; ?>
@@ -259,6 +286,8 @@
                         <?php if (isInstructor()): ?>
                             <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>instructor/profile"><i class="bi bi-person-gear me-2 text-secondary"></i> Edit Contact Info</a></li>
                         <?php endif; ?>
+                        <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>auth/myPassword"><i class="bi bi-key-fill me-2 text-secondary"></i> Change My Password</a></li>
+                        <li><hr class="dropdown-divider border-color"></li>
                         <li><a class="dropdown-item small text-danger" href="<?php echo URLROOT; ?>auth/logout"><i class="bi bi-box-arrow-right me-2 text-danger"></i> Logout</a></li>
                     </ul>
                 </div>
