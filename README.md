@@ -254,7 +254,7 @@ define('DB_NAME', 'slaf_clms');   // The database name you created in Step 4
 3. Log in using the default admin credentials:
    ```
    Username : admin
-   Password : admin123
+   Password : admin
    ```
 
 4. ✅ **After first login, immediately go to:**
@@ -270,8 +270,8 @@ define('DB_NAME', 'slaf_clms');   // The database name you created in Step 4
 | Role | Username | Password | Notes |
 |---|---|---|---|
 | **Administrator** | `admin` | `admin123` | Full system access |
-| Sample Instructor | `sgt.wijesinghe` | `password123` | Sample data only |
-| Sample Instructor | `fg.perera` | `password123` | Sample data only |
+| Sample Instructor | `sgt.jhon` | `password123` | Sample data only |
+| Sample Instructor | `fg.kumara` | `password123` | Sample data only |
 
 ---
 
