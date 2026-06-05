@@ -77,7 +77,7 @@ class InstructorController extends Controller {
             $profilePhoto = null;
             if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
                 try {
-                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo']);
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], null, $serviceNo);
                 } catch (Exception $e) {
                     flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
                     redirect('instructor');
@@ -160,7 +160,7 @@ class InstructorController extends Controller {
 
             if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
                 try {
-                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo);
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo, $serviceNo);
                     $photoUploadedAt = date('Y-m-d H:i:s');
                 } catch (Exception $e) {
                     flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
@@ -260,7 +260,7 @@ class InstructorController extends Controller {
 
             if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
                 try {
-                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo);
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo, $instructor->service_no);
                     $photoUploadedAt = date('Y-m-d H:i:s');
                 } catch (Exception $e) {
                     flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
@@ -339,7 +339,7 @@ class InstructorController extends Controller {
             $photoUploaded = false;
             if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
                 try {
-                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo']);
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], null, $serviceNo);
                     $photoUploaded = true;
                 } catch (Exception $e) {
                     $errors[] = $e->getMessage();
@@ -551,7 +551,7 @@ class InstructorController extends Controller {
     /**
      * Securely process, validate, resize and compress profile photos to WebP.
      */
-    private function handlePhotoUpload($file, $existingPhoto = null) {
+    private function handlePhotoUpload($file, $existingPhoto = null, $serviceNo = null) {
         if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
             return $existingPhoto;
         }
@@ -574,8 +574,13 @@ class InstructorController extends Controller {
             throw new Exception("Uploaded file is not a valid image.");
         }
 
-        // Generate randomized filename
-        $randHex = bin2hex(random_bytes(4));
+        // Build base filename from sanitized service number
+        if (!empty($serviceNo)) {
+            $baseName = preg_replace('/[^A-Za-z0-9_-]/', '_', $serviceNo);
+        } else {
+            $baseName = "instructor_" . bin2hex(random_bytes(4));
+        }
+
         $uploadDir = 'uploads/instructors/';
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -602,13 +607,13 @@ class InstructorController extends Controller {
                 throw new Exception("Failed to process image file.");
             }
 
-            $newFilename = "instructor_" . $randHex . ".webp";
-            $newThumbFilename = "instructor_" . $randHex . "_thumb.webp";
+            $newFilename = $baseName . ".webp";
+            $newThumbFilename = $baseName . "_thumb.webp";
 
             $destPath = $uploadDir . $newFilename;
             $thumbPath = $uploadDir . $newThumbFilename;
 
-            // Resize and optimize to WebP
+            // Resize, center crop, and optimize to WebP
             $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 400, 400, $destPath);
             $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 100, 100, $thumbPath);
 
@@ -627,8 +632,8 @@ class InstructorController extends Controller {
             }
             $origExtension = strtolower($origExtension);
 
-            $newFilename = "instructor_" . $randHex . "." . $origExtension;
-            $newThumbFilename = "instructor_" . $randHex . "_thumb." . $origExtension;
+            $newFilename = $baseName . "." . $origExtension;
+            $newThumbFilename = $baseName . "_thumb." . $origExtension;
 
             $destPath = $uploadDir . $newFilename;
             $thumbPath = $uploadDir . $newThumbFilename;
@@ -640,8 +645,8 @@ class InstructorController extends Controller {
             copy($destPath, $thumbPath);
         }
 
-        // Delete old photo and thumbnail if they exist
-        if ($existingPhoto) {
+        // Delete old photo and thumbnail if they exist and are different
+        if ($existingPhoto && $existingPhoto !== $newFilename) {
             $oldPath = $uploadDir . $existingPhoto;
             $oldThumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $existingPhoto);
             $oldThumbPath = $uploadDir . $oldThumb;
@@ -653,21 +658,21 @@ class InstructorController extends Controller {
     }
 
     /**
-     * Resizes and crops or fits image, saving as WebP
+     * Center crops and resizes image, saving as WebP
      */
     private function resizeAndSaveImage($srcImage, $srcW, $srcH, $maxW, $maxH, $destPath) {
-        $ratio = min($maxW / $srcW, $maxH / $srcH);
-        $newW = round($srcW * $ratio);
-        $newH = round($srcH * $ratio);
+        $cropSize = min($srcW, $srcH);
+        $cropX = ($srcW - $cropSize) / 2;
+        $cropY = ($srcH - $cropSize) / 2;
 
-        $destImage = imagecreatetruecolor($newW, $newH);
+        $destImage = imagecreatetruecolor($maxW, $maxH);
 
         imagealphablending($destImage, false);
         imagesavealpha($destImage, true);
         $transparent = imagecolorallocatealpha($destImage, 255, 255, 255, 127);
-        imagefilledrectangle($destImage, 0, 0, $newW, $newH, $transparent);
+        imagefilledrectangle($destImage, 0, 0, $maxW, $maxH, $transparent);
 
-        imagecopyresampled($destImage, $srcImage, 0, 0, 0, 0, $newW, $newH, $srcW, $srcH);
+        imagecopyresampled($destImage, $srcImage, 0, 0, $cropX, $cropY, $maxW, $maxH, $cropSize, $cropSize);
 
         imagewebp($destImage, $destPath, 80);
         imagedestroy($destImage);

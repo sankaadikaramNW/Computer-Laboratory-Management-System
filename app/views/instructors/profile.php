@@ -11,8 +11,9 @@
                 <div class="d-flex align-items-center">
                     <?php if(!empty($data['instructor']->profile_photo)): 
                         $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $data['instructor']->profile_photo);
+                        $photoVersion = !empty($data['instructor']->photo_uploaded_at) ? strtotime($data['instructor']->photo_uploaded_at) : time();
                     ?>
-                        <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary me-3" style="width:60px; height:60px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($data['instructor']->profile_photo); ?>')">
+                        <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>?v=<?php echo $photoVersion; ?>" class="rounded-circle border border-primary me-3" style="width:60px; height:60px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($data['instructor']->profile_photo); ?>?v=<?php echo $photoVersion; ?>')">
                     <?php else: ?>
                         <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; color:#888;">
                             <i class="bi bi-person" style="font-size:2rem;"></i>

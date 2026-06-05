@@ -6,7 +6,7 @@
         <?php if(!empty($_SESSION['instructor_photo'])): 
             $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $_SESSION['instructor_photo']);
         ?>
-            <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary shadow-sm" style="width:50px; height:50px; object-fit:cover;">
+            <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>?v=<?php echo time(); ?>" class="rounded-circle border border-primary shadow-sm" style="width:50px; height:50px; object-fit:cover;">
         <?php else: ?>
             <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center shadow-sm" style="width:50px; height:50px; color:var(--primary);">
                 <i class="bi bi-person-workspace fs-4"></i>
