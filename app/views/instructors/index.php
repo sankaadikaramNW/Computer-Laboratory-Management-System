@@ -50,9 +50,8 @@
                 <?php if(!empty($data['instructors'])): ?>
                     <?php foreach($data['instructors'] as $i): ?>
                         <tr>
-                            <td>
                                 <?php if(!empty($i->profile_photo)): 
-                                    $thumb = str_replace('.webp', '_thumb.webp', $i->profile_photo);
+                                    $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $i->profile_photo);
                                 ?>
                                     <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($i->profile_photo); ?>')">
                                 <?php else: ?>
@@ -436,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             : '';
 
                         const photoMarkup = i.profile_photo && i.profile_photo !== ''
-                            ? `<img src="${URLROOT}uploads/instructors/${i.profile_photo.replace('.webp', '_thumb.webp')}" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('${URLROOT}uploads/instructors/${i.profile_photo}')">`
+                            ? `<img src="${URLROOT}uploads/instructors/${i.profile_photo.replace(/(\.[a-zA-Z0-9]+)$/, '_thumb$1')}" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('${URLROOT}uploads/instructors/${i.profile_photo}')">`
                             : `<div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width:40px; height:40px; color:#888;">
                                     <i class="bi bi-person" style="font-size:1.4rem;"></i>
                                </div>`;

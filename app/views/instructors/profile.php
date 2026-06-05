@@ -10,7 +10,7 @@
             <div class="p-3 bg-light-subtle rounded border border-color mb-4" style="background-color: rgba(69, 110, 157, 0.03) !important;">
                 <div class="d-flex align-items-center">
                     <?php if(!empty($data['instructor']->profile_photo)): 
-                        $thumb = str_replace('.webp', '_thumb.webp', $data['instructor']->profile_photo);
+                        $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $data['instructor']->profile_photo);
                     ?>
                         <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary me-3" style="width:60px; height:60px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($data['instructor']->profile_photo); ?>')">
                     <?php else: ?>

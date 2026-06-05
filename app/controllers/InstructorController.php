@@ -574,49 +574,77 @@ class InstructorController extends Controller {
             throw new Exception("Uploaded file is not a valid image.");
         }
 
-        // Create resource
-        switch ($fileMime) {
-            case 'image/jpeg':
-            case 'image/jpg':
-                $srcImage = @imagecreatefromjpeg($file['tmp_name']);
-                break;
-            case 'image/png':
-                $srcImage = @imagecreatefrompng($file['tmp_name']);
-                break;
-            case 'image/webp':
-                $srcImage = @imagecreatefromwebp($file['tmp_name']);
-                break;
-            default:
-                $srcImage = null;
-        }
-
-        if (!$srcImage) {
-            throw new Exception("Failed to process image file.");
-        }
-
-        // Generate randomized WebP filename
+        // Generate randomized filename
         $randHex = bin2hex(random_bytes(4));
-        $newFilename = "instructor_" . $randHex . ".webp";
-        $newThumbFilename = "instructor_" . $randHex . "_thumb.webp";
-
         $uploadDir = 'uploads/instructors/';
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        $destPath = $uploadDir . $newFilename;
-        $thumbPath = $uploadDir . $newThumbFilename;
+        if (extension_loaded('gd')) {
+            // Create resource
+            switch ($fileMime) {
+                case 'image/jpeg':
+                case 'image/jpg':
+                    $srcImage = @imagecreatefromjpeg($file['tmp_name']);
+                    break;
+                case 'image/png':
+                    $srcImage = @imagecreatefrompng($file['tmp_name']);
+                    break;
+                case 'image/webp':
+                    $srcImage = @imagecreatefromwebp($file['tmp_name']);
+                    break;
+                default:
+                    $srcImage = null;
+            }
 
-        // Resize and optimize to WebP
-        $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 400, 400, $destPath);
-        $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 100, 100, $thumbPath);
+            if (!$srcImage) {
+                throw new Exception("Failed to process image file.");
+            }
 
-        imagedestroy($srcImage);
+            $newFilename = "instructor_" . $randHex . ".webp";
+            $newThumbFilename = "instructor_" . $randHex . "_thumb.webp";
+
+            $destPath = $uploadDir . $newFilename;
+            $thumbPath = $uploadDir . $newThumbFilename;
+
+            // Resize and optimize to WebP
+            $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 400, 400, $destPath);
+            $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 100, 100, $thumbPath);
+
+            imagedestroy($srcImage);
+        } else {
+            // Fallback when GD extension is disabled/not installed: save original file
+            $origExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            if (empty($origExtension)) {
+                $extensions = [
+                    'image/jpeg' => 'jpg',
+                    'image/jpg' => 'jpg',
+                    'image/png' => 'png',
+                    'image/webp' => 'webp'
+                ];
+                $origExtension = isset($extensions[$fileMime]) ? $extensions[$fileMime] : 'jpg';
+            }
+            $origExtension = strtolower($origExtension);
+
+            $newFilename = "instructor_" . $randHex . "." . $origExtension;
+            $newThumbFilename = "instructor_" . $randHex . "_thumb." . $origExtension;
+
+            $destPath = $uploadDir . $newFilename;
+            $thumbPath = $uploadDir . $newThumbFilename;
+
+            if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+                throw new Exception("Failed to save uploaded image.");
+            }
+            // Duplicate original file for thumbnail
+            copy($destPath, $thumbPath);
+        }
 
         // Delete old photo and thumbnail if they exist
         if ($existingPhoto) {
             $oldPath = $uploadDir . $existingPhoto;
-            $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $existingPhoto);
+            $oldThumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $existingPhoto);
+            $oldThumbPath = $uploadDir . $oldThumb;
             if (file_exists($oldPath)) @unlink($oldPath);
             if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
         }
