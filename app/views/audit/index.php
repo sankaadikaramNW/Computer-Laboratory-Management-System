@@ -19,11 +19,19 @@
         </div>
     </div>
 
-    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-        <table class="table table-hover table-clms align-middle" id="logsTable">
+    <div class="table-responsive" style="max-height: 650px; overflow-y: auto;">
+        <table class="table table-hover table-clms align-middle" id="logsTable" style="table-layout: fixed; width: 100%;">
+            <colgroup>
+                <col style="width: 150px;">  <!-- Timestamp -->
+                <col style="width: 140px;">  <!-- User Account -->
+                <col style="width: 130px;">  <!-- Scope -->
+                <col style="width: 180px;">  <!-- Action Event -->
+                <col style="width: auto;">   <!-- Details — takes remaining space -->
+                <col style="width: 110px;">  <!-- IP Address -->
+            </colgroup>
             <thead>
                 <tr>
-                    <th>Timestamp</th>
+                    <th class="text-nowrap">Timestamp</th>
                     <th>User Account</th>
                     <th>Scope</th>
                     <th>Action Event</th>
@@ -33,19 +41,60 @@
             </thead>
             <tbody>
                 <?php if(!empty($data['logs'])): ?>
+                    <?php
+                    // Colour map: module name → Bootstrap contextual colour
+                    $scopeColours = [
+                        'INSTRUCTORS'  => 'primary',
+                        'USERS'        => 'info',
+                        'EQUIPMENT'    => 'success',
+                        'LABORATORIES' => 'warning',
+                        'ALLOCATIONS'  => 'secondary',
+                        'MAINTENANCE'  => 'danger',
+                        'FAULTS'       => 'danger',
+                        'LESSONS'      => 'success',
+                        'REQUESTS'     => 'warning',
+                        'NOTICES'      => 'info',
+                        'AUTH'         => 'dark',
+                        'SYSTEM'       => 'dark',
+                    ];
+                    ?>
                     <?php foreach($data['logs'] as $log): ?>
+                        <?php
+                            $module = strtoupper($log->module ?? '');
+                            $colour = $scopeColours[$module] ?? 'secondary';
+                        ?>
                         <tr class="log-row">
                             <td class="text-nowrap small text-muted"><?php echo date('d M Y H:i:s', strtotime($log->created_at)); ?></td>
+
                             <td>
-                                <strong class="small"><?php echo e($log->username ?: 'System'); ?></strong>
+                                <strong class="small d-block"><?php echo e($log->username ?: 'System'); ?></strong>
                                 <?php if($log->role_name): ?>
                                     <span class="badge bg-secondary text-capitalize" style="font-size: 0.65rem;"><?php echo e($log->role_name); ?></span>
                                 <?php endif; ?>
                             </td>
-                            <td><span class="badge bg-outline-primary border small text-uppercase"><?php echo e($log->module); ?></span></td>
-                            <td><span class="fw-semibold small text-warning"><?php echo e($log->action); ?></span></td>
-                            <td><small class="text-secondary"><?php echo e($log->details); ?></small></td>
-                            <td><code class="small text-muted"><?php echo e($log->ip_address ?: '-'); ?></code></td>
+
+                            <td>
+                                <span class="badge bg-<?php echo $colour; ?> text-uppercase px-2 py-1" style="font-size: 0.7rem; letter-spacing: 0.04em;">
+                                    <?php echo e($log->module); ?>
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="fw-semibold small text-warning d-block" style="word-break: break-word;">
+                                    <?php echo e($log->action); ?>
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="small text-secondary" style="display: block; word-wrap: break-word; white-space: normal;"
+                                      title="<?php echo htmlspecialchars($log->details, ENT_QUOTES); ?>">
+                                    <?php echo e($log->details); ?>
+                                </span>
+                            </td>
+
+                            <td>
+                                <code class="small text-muted text-nowrap"><?php echo e($log->ip_address ?: '-'); ?></code>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

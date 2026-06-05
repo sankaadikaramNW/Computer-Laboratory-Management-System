@@ -14,12 +14,13 @@
             <?php foreach($data['notifications'] as $n): 
                 $bgClass = $n->is_read ? '' : 'bg-light-subtle fw-semibold border-start border-primary border-3';
                 
-                // Determine icon based on category type
+                // Determine icon based on notification type
                 $icon = 'bi-bell-fill text-primary';
-                if($n->type === 'schedule') $icon = 'bi-calendar-event text-info';
-                elseif($n->type === 'request_update') $icon = 'bi-arrow-left-right text-warning';
-                elseif($n->type === 'cancellation') $icon = 'bi-calendar-x text-danger';
-                elseif($n->type === 'fault_update') $icon = 'bi-wrench text-danger';
+                if     ($n->type === 'NOTICE')         $icon = 'bi-megaphone-fill text-primary';
+                elseif ($n->type === 'schedule')       $icon = 'bi-calendar-event text-info';
+                elseif ($n->type === 'request_update') $icon = 'bi-arrow-left-right text-warning';
+                elseif ($n->type === 'cancellation')   $icon = 'bi-calendar-x text-danger';
+                elseif ($n->type === 'fault_update')   $icon = 'bi-wrench text-danger';
             ?>
                 <div class="list-group-item d-flex align-items-center justify-content-between p-3 <?php echo $bgClass; ?>">
                     <div class="d-flex align-items-center">

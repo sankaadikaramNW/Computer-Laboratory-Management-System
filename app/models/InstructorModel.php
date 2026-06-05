@@ -113,7 +113,12 @@ class InstructorModel extends Model {
         $sql = "SELECT i.*, u.username FROM instructors i LEFT JOIN users u ON i.user_id = u.id WHERE 1=1";
         
         if (!empty($term)) {
-            $sql .= " AND (i.service_no LIKE :term OR i.full_name LIKE :term)";
+            $sql .= " AND (i.service_no LIKE :term 
+                        OR i.full_name LIKE :term 
+                        OR i.rank LIKE :term 
+                        OR i.trade LIKE :term 
+                        OR u.username LIKE :term 
+                        OR i.email LIKE :term)";
         }
         if (!empty($rank)) {
             $sql .= " AND i.rank = :rank";
@@ -155,6 +160,18 @@ class InstructorModel extends Model {
     public function serviceNoExistsExcluding($serviceNo, $excludeId) {
         $this->db->query("SELECT id FROM instructors WHERE service_no = :service_no AND id != :id");
         $this->db->bind(':service_no', $serviceNo);
+        $this->db->bind(':id', $excludeId);
+        $this->db->execute();
+        return $this->db->rowCount() > 0;
+    }
+
+    /**
+     * Check if a user_id is already linked to a DIFFERENT instructor (for update duplicate check)
+     */
+    public function userIdExistsExcluding($userId, $excludeId) {
+        if (!$userId) return false; // NULL is allowed (unlinked)
+        $this->db->query("SELECT id FROM instructors WHERE user_id = :user_id AND id != :id");
+        $this->db->bind(':user_id', $userId);
         $this->db->bind(':id', $excludeId);
         $this->db->execute();
         return $this->db->rowCount() > 0;

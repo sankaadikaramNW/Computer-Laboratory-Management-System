@@ -61,4 +61,20 @@ class NotificationModel extends Model {
         $this->db->bind(':user_id', $userId);
         return $this->db->execute();
     }
+
+    /**
+     * Check if a NOTICE notification was already sent to a specific user for a given notice ID.
+     * Prevents duplicate fanout when a notice is updated.
+     */
+    public function noticeAlreadyNotified($noticeId, $userId) {
+        $this->db->query("SELECT id FROM notifications 
+                          WHERE user_id = :user_id 
+                            AND type = 'NOTICE' 
+                            AND related_id = :notice_id 
+                          LIMIT 1");
+        $this->db->bind(':user_id', $userId);
+        $this->db->bind(':notice_id', $noticeId);
+        $this->db->execute();
+        return $this->db->rowCount() > 0;
+    }
 }

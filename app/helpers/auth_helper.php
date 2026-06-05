@@ -43,6 +43,37 @@ function requireLogin() {
         flash('login_error', 'Access Denied. Please log in first.', 'alert alert-danger alert-dismissible fade show');
         redirect('auth/login');
     }
+
+    // Check for session timeout (default 30 minutes / 1800 seconds)
+    if (isset($_SESSION['last_activity'])) {
+        $timeout = 1800; // default 30 mins
+        if (time() - $_SESSION['last_activity'] > $timeout) {
+            $username = $_SESSION['username'] ?? '';
+            // Clear session
+            $_SESSION = [];
+            if (ini_get("session.use_cookies")) {
+                $params = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000,
+                    $params["path"], $params["domain"],
+                    $params["secure"], $params["httponly"]
+                );
+            }
+            session_destroy();
+            session_start();
+            flash('login_error', 'Session expired due to inactivity. Please log in again.', 'alert alert-warning alert-dismissible fade show');
+            redirect('auth/login');
+        }
+    }
+    $_SESSION['last_activity'] = time();
+
+    // Check for forced password change
+    if (isset($_SESSION['must_change_password']) && $_SESSION['must_change_password'] === true) {
+        $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
+        if ($url !== 'auth/changePassword' && $url !== 'auth/logout') {
+            flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
+            redirect('auth/changePassword');
+        }
+    }
 }
 
 /**

@@ -43,10 +43,21 @@
                                             data-title="<?php echo e($n->title); ?>"
                                             data-content="<?php echo e($n->content); ?>"
                                             data-status="<?php echo e($n->status); ?>"
-                                            data-bs-toggle="modal" data-bs-target="#editNoticeModal">
+                                            data-bs-toggle="modal" data-bs-target="#editNoticeModal"
+                                            title="Edit">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
-                                    <a href="<?php echo URLROOT; ?>notice/delete/<?php echo $n->id; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this announcement from the board?');">
+
+                                    <?php if($n->status === 'active'): ?>
+                                    <a href="<?php echo URLROOT; ?>notice/notify/<?php echo $n->id; ?>"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Send notification to all instructors"
+                                       onclick="return confirm('Send this announcement as a notification to all active instructors?');">
+                                        <i class="bi bi-bell-fill"></i>
+                                    </a>
+                                    <?php endif; ?>
+
+                                    <a href="<?php echo URLROOT; ?>notice/delete/<?php echo $n->id; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this announcement from the board?');" title="Delete">
                                         <i class="bi bi-trash-fill"></i>
                                     </a>
                                 </div>

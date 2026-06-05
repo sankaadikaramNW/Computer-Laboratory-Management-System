@@ -20,6 +20,22 @@
     </div>
 </div>
 
+<!-- Global Search Bar Section -->
+<div class="card-clms mb-4 position-relative">
+    <div class="card-body p-3">
+        <div class="input-group input-group-lg">
+            <span class="input-group-text bg-transparent border-end-0 text-primary"><i class="bi bi-search fs-5"></i></span>
+            <input type="text" id="globalSearchInput" class="form-control bg-transparent border-start-0 ps-0" style="box-shadow:none; font-size:1.05rem;" placeholder="Global Search: Type Service No, Instructor, Lab Name, Lesson, or Asset Number..." autocomplete="off">
+            <button class="btn btn-primary px-4" type="button" id="globalSearchBtn">Search</button>
+        </div>
+        
+        <!-- Live Autocomplete dropdown -->
+        <div id="globalSearchResults" class="list-group shadow-lg position-absolute w-100 start-0 px-3 d-none" style="z-index: 1050; top: 100%; max-height: 400px; overflow-y: auto; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0 0 8px 8px;">
+            <!-- Category and item list will populate here -->
+        </div>
+    </div>
+</div>
+
 <!-- KPI Row 1 — Resources -->
 <div class="row g-3 mb-3">
     <div class="col-xl-3 col-sm-6">
@@ -361,3 +377,80 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("globalSearchInput");
+    const searchResults = document.getElementById("globalSearchResults");
+    let debounceTimer;
+
+    searchInput.addEventListener("input", function() {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+        
+        if (query.length < 2) {
+            searchResults.classList.add("d-none");
+            searchResults.innerHTML = "";
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch('<?php echo URLROOT; ?>inquiry/globalSearch?q=' + encodeURIComponent(query))
+                .then(res => res.json())
+                .then(data => {
+                    searchResults.innerHTML = "";
+                    let hasResults = false;
+
+                    const categories = {
+                        instructors: { title: "Instructors", icon: "bi-people-fill text-primary" },
+                        labs: { title: "Laboratories", icon: "bi-door-closed text-info" },
+                        lessons: { title: "Lessons", icon: "bi-book text-success" },
+                        computers: { title: "Computers / Assets", icon: "bi-cpu text-warning" }
+                    };
+
+                    for (const [key, cat] of Object.entries(categories)) {
+                        if (data[key] && data[key].length > 0) {
+                            hasResults = true;
+                            
+                            // Category Header
+                            const header = document.createElement("div");
+                            header.className = "list-group-item bg-light text-muted small fw-bold px-2 py-1 border-0 mt-2";
+                            header.innerHTML = `<i class="${cat.icon} me-1"></i> ${cat.title}`;
+                            searchResults.appendChild(header);
+
+                            // Category Items
+                            data[key].forEach(item => {
+                                const a = document.createElement("a");
+                                a.href = `<?php echo URLROOT; ?>${item.link_base}`;
+                                a.className = "list-group-item list-group-item-action border-0 px-3 py-2 d-flex justify-content-between align-items-center";
+                                a.innerHTML = `
+                                    <div>
+                                        <span class="fw-semibold d-block text-dark">${item.label}</span>
+                                        <small class="text-muted">${item.sub}</small>
+                                    </div>
+                                    <span class="badge bg-secondary-subtle text-secondary small">${item.module}</span>
+                                `;
+                                searchResults.appendChild(a);
+                            });
+                        }
+                    }
+
+                    if (hasResults) {
+                        searchResults.classList.remove("d-none");
+                    } else {
+                        searchResults.innerHTML = '<div class="list-group-item text-center py-3 text-muted small">No matches found.</div>';
+                        searchResults.classList.remove("d-none");
+                    }
+                });
+        }, 250);
+    });
+
+    // Close search dropdown on click outside
+    document.addEventListener("click", function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.add("d-none");
+        }
+    });
+});
+</script>
+
