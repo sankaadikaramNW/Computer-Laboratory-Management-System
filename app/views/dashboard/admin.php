@@ -151,8 +151,64 @@
                 <div class="stats-icon-wrapper icon-yellow">
                     <i class="bi bi-wrench-adjustable"></i>
                 </div>
+    </div>
+</div>
+
+<!-- KPI Row 3 — Session Completion Metrics Today -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <a href="<?php echo URLROOT; ?>inquiry/sessionCompletionRecords?status=Scheduled&date_from=<?php echo date('Y-m-d'); ?>&date_to=<?php echo date('Y-m-d'); ?>" class="text-decoration-none d-block">
+        <div class="stats-card accent-blue" style="cursor:pointer;">
+            <div>
+                <p class="stats-label mb-1">Scheduled Today</p>
+                <h2 class="stats-count" style="color:var(--primary);"><?php echo $data['stats_today']['scheduled_today']; ?></h2>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Awaiting completion log</small>
             </div>
+            <div class="stats-icon-wrapper icon-blue">
+                <i class="bi bi-calendar-event-fill"></i>
+            </div>
+        </div>
         </a>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <a href="<?php echo URLROOT; ?>inquiry/sessionCompletionRecords?status=Completed+Successfully&date_from=<?php echo date('Y-m-d'); ?>&date_to=<?php echo date('Y-m-d'); ?>" class="text-decoration-none d-block">
+        <div class="stats-card accent-green" style="cursor:pointer;">
+            <div>
+                <p class="stats-label mb-1">Completed Today</p>
+                <h2 class="stats-count" style="color:var(--success);"><?php echo $data['stats_today']['completed_today']; ?></h2>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Successfully executed</small>
+            </div>
+            <div class="stats-icon-wrapper icon-green">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <a href="<?php echo URLROOT; ?>inquiry/sessionCompletionRecords?status=Cancelled" class="text-decoration-none d-block">
+        <div class="stats-card accent-red" style="cursor:pointer;">
+            <div>
+                <p class="stats-label mb-1">Cancelled Sessions</p>
+                <h2 class="stats-count" style="color:var(--danger);"><?php echo $data['stats_today']['cancelled_total']; ?></h2>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Total cancelled overall</small>
+            </div>
+            <div class="stats-icon-wrapper icon-red">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="stats-card accent-blue">
+            <div>
+                <p class="stats-label mb-1">Completion Percentage</p>
+                <h2 class="stats-count" style="color:var(--primary);"><?php echo $data['stats_today']['completion_percentage']; ?>%</h2>
+                <small style="color:var(--text-muted);font-size:0.75rem;">For today's scheduled runs</small>
+            </div>
+            <div class="stats-icon-wrapper icon-blue">
+                <i class="bi bi-percent"></i>
+            </div>
+        </div>
     </div>
 </div>
 

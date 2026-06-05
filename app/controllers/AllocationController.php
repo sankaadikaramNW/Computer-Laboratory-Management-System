@@ -275,7 +275,9 @@ class AllocationController extends Controller {
                     'lessonName' => $a->lesson_name,
                     'lessonCode' => $a->lesson_code,
                     'lessonId' => $a->lesson_id,
-                    'remarks' => $a->remarks ?: 'None'
+                    'remarks' => $a->remarks ?: 'None',
+                    'sessionStatus' => $a->session_status,
+                    'instructorRemarks' => $a->instructor_remarks ?: ''
                 ]
             ];
         }
@@ -351,5 +353,116 @@ class AllocationController extends Controller {
                 $this->json(['success' => false, 'message' => 'Failed to save changes.']);
             }
         }
+    }
+
+    /**
+     * Show instructor's allocated schedule (Pending Completion & Upcoming)
+     */
+    public function mySchedule() {
+        requireInstructor();
+        $instructorId = $_SESSION['instructor_id'] ?? null;
+        if (!$instructorId) {
+            flash('dashboard_error', 'Your user account is not associated with an instructor profile.', 'alert alert-danger');
+            redirect('dashboard/instructor');
+        }
+
+        $pending = $this->allocModel->getPendingCompletionSessions($instructorId);
+        $completed = $this->allocModel->getRecentlyCompletedSessions($instructorId, 10);
+        $upcoming = $this->allocModel->getUpcomingSessionsForInstructor($instructorId, 20);
+
+        $data = [
+            'title' => 'My Schedule',
+            'active_menu' => 'my_schedule',
+            'pending_sessions' => $pending,
+            'completed_sessions' => $completed,
+            'upcoming_sessions' => $upcoming
+        ];
+
+        $this->view('templates/header', $data);
+        $this->view('allocations/my_schedule', $data);
+        $this->view('templates/footer');
+    }
+
+    /**
+     * Complete Session and add remarks (Instructor action)
+     */
+    public function complete($id) {
+        requireInstructor();
+        $instructorId = $_SESSION['instructor_id'] ?? null;
+        if (!$instructorId) {
+            flash('dashboard_error', 'Access denied. Instructor profile missing.', 'alert alert-danger');
+            redirect('dashboard/instructor');
+        }
+
+        $alloc = $this->allocModel->getAllocationById($id);
+        if (!$alloc || (int)$alloc->instructor_id !== (int)$instructorId) {
+            flash('dashboard_error', 'Invalid allocation or access denied.', 'alert alert-danger');
+            redirect('allocation/mySchedule');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+                flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
+                redirect('allocation/complete/' . $id);
+            }
+
+            $status = trim($_POST['session_status'] ?? '');
+            $remarks = trim($_POST['instructor_remarks'] ?? '');
+
+            // Validation
+            $allowedStatuses = ['Completed Successfully', 'Partially Completed', 'Cancelled'];
+            if (!in_array($status, $allowedStatuses)) {
+                flash('dashboard_error', 'Please select a valid session status.', 'alert alert-danger');
+                redirect('allocation/complete/' . $id);
+            }
+
+            if (strlen($remarks) > 1000) {
+                flash('dashboard_error', 'Remarks must be less than 1000 characters.', 'alert alert-danger');
+                redirect('allocation/complete/' . $id);
+            }
+
+            if ($this->allocModel->completeSession($id, $status, $remarks, $_SESSION['user_id'])) {
+                $this->logActivity('COMPLETE_SESSION', 'ALLOCATIONS', "Completed session ID {$id} with status '{$status}'.");
+                flash('dashboard_success', 'Session completion logged successfully.', 'alert alert-success');
+                redirect('allocation/mySchedule');
+            } else {
+                flash('dashboard_error', 'Failed to save session completion state.', 'alert alert-danger');
+                redirect('allocation/complete/' . $id);
+            }
+        } else {
+            $data = [
+                'title' => 'Complete Session',
+                'active_menu' => 'my_schedule',
+                'alloc' => $alloc
+            ];
+
+            $this->view('templates/header', $data);
+            $this->view('allocations/complete', $data);
+            $this->view('templates/footer');
+        }
+    }
+
+    /**
+     * View instructor's completed, cancelled, and rescheduled session history
+     */
+    public function myHistory() {
+        requireInstructor();
+        $instructorId = $_SESSION['instructor_id'] ?? null;
+        if (!$instructorId) {
+            flash('dashboard_error', 'Your user account is not associated with an instructor profile.', 'alert alert-danger');
+            redirect('dashboard/instructor');
+        }
+
+        $history = $this->allocModel->getInstructorSessionHistory($instructorId);
+
+        $data = [
+            'title' => 'My Session History',
+            'active_menu' => 'my_history',
+            'history' => $history
+        ];
+
+        $this->view('templates/header', $data);
+        $this->view('allocations/my_history', $data);
+        $this->view('templates/footer');
     }
 }

@@ -206,6 +206,35 @@ class InquiryController extends Controller {
         $this->view('templates/footer');
     }
 
+    // ─── 7. Session Completion Records (Admin View) ──────────────────────────
+    public function sessionCompletionRecords() {
+        $f = $this->filters();
+        $records = $this->inquiryModel->getSessionCompletionRecords($f);
+
+        $counts = ['Completed Successfully' => 0, 'Partially Completed' => 0, 'Cancelled' => 0, 'Total' => 0];
+        foreach ($records as $r) {
+            $status = $r->session_status;
+            if (array_key_exists($status, $counts)) {
+                $counts[$status]++;
+            }
+            $counts['Total']++;
+        }
+
+        $data = array_merge($this->refs(), [
+            'title'       => 'Session Completion Records',
+            'active_menu' => 'session_completion_records',
+            'filters'     => $f,
+            'records'     => $records,
+            'counts'      => $counts
+        ]);
+
+        if ($this->isAjax()) { $this->json(['records' => $records, 'counts' => $counts]); return; }
+
+        $this->view('templates/header', $data);
+        $this->view('inquiry/session_completion_records', $data);
+        $this->view('templates/footer');
+    }
+
     // ─── Global Search (AJAX only) ────────────────────────────────────────────
     public function globalSearch() {
         $term = trim($_GET['q'] ?? '');

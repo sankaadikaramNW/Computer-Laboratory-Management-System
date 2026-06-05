@@ -87,6 +87,13 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Session Status</label>
+                    <div>
+                        <span class="badge" id="det_status"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Remarks / Notes</label>
                     <p class="p-2 bg-light-subtle rounded border border-color small" id="det_remarks"></p>
                 </div>
@@ -95,6 +102,9 @@
                 <div class="admin-actions d-none" id="det_admin_actions">
                     <a href="" id="det_edit_btn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil-fill me-1"></i> Edit</a>
                     <a href="" id="det_delete_btn" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this scheduled allocation?');"><i class="bi bi-trash-fill me-1"></i> Cancel Slot</a>
+                </div>
+                <div class="instructor-actions d-none" id="det_instructor_actions">
+                    <a href="" id="det_complete_btn" class="btn btn-success btn-sm"><i class="bi bi-check-circle me-1"></i> Complete Session</a>
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm ms-auto" data-bs-dismiss="modal">Close</button>
             </div>
@@ -223,14 +233,46 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('det_time').innerText = startTimeStr + ' - ' + endTimeStr;
             document.getElementById('det_remarks').innerText = props.remarks;
             
+            // Reset action panels
+            var adminPanel = document.getElementById('det_admin_actions');
+            if (adminPanel) adminPanel.classList.add('d-none');
+            var instructorPanel = document.getElementById('det_instructor_actions');
+            if (instructorPanel) instructorPanel.classList.add('d-none');
+
+            // Set session status badge
+            var statusEl = document.getElementById('det_status');
+            var status = props.sessionStatus || 'Scheduled';
+            statusEl.innerText = status;
+            statusEl.className = 'badge';
+            if (status === 'Completed Successfully' || status === 'Completed') {
+                statusEl.classList.add('bg-success-subtle', 'text-success');
+            } else if (status === 'Partially Completed') {
+                statusEl.classList.add('bg-warning-subtle', 'text-warning-emphasis');
+            } else if (status === 'Cancelled') {
+                statusEl.classList.add('bg-danger-subtle', 'text-danger');
+            } else {
+                statusEl.classList.add('bg-primary-subtle', 'text-primary');
+            }
+            
             // Show admin options if authorized
             <?php if(isAdmin()): ?>
-                var adminPanel = document.getElementById('det_admin_actions');
-                adminPanel.classList.remove('d-none');
-                
-                // Set links
-                document.getElementById('det_edit_btn').href = '<?php echo URLROOT; ?>allocation/schedule';
-                document.getElementById('det_delete_btn').href = '<?php echo URLROOT; ?>allocation/delete/' + info.event.id;
+                if (adminPanel) {
+                    adminPanel.classList.remove('d-none');
+                    // Set links
+                    document.getElementById('det_edit_btn').href = '<?php echo URLROOT; ?>allocation/schedule';
+                    document.getElementById('det_delete_btn').href = '<?php echo URLROOT; ?>allocation/delete/' + info.event.id;
+                }
+            <?php endif; ?>
+
+            // Show instructor options if authorized
+            <?php if(isInstructor()): ?>
+                if (instructorPanel) {
+                    var currentInstructorId = <?php echo $_SESSION['instructor_id'] ?: 0; ?>;
+                    if (parseInt(props.instructorId) === currentInstructorId && (status === 'Scheduled' || status === 'In Progress')) {
+                        instructorPanel.classList.remove('d-none');
+                        document.getElementById('det_complete_btn').href = '<?php echo URLROOT; ?>allocation/complete/' + info.event.id;
+                    }
+                }
             <?php endif; ?>
             
             // Open modal

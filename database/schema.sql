@@ -132,11 +132,16 @@ CREATE TABLE IF NOT EXISTS allocations (
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     remarks TEXT,
+    session_status VARCHAR(50) NOT NULL DEFAULT 'Scheduled',
+    instructor_remarks TEXT NULL,
+    completed_at DATETIME NULL,
+    completed_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
-    FOREIGN KEY (lab_id) REFERENCES laboratories(id) ON DELETE CASCADE
+    FOREIGN KEY (lab_id) REFERENCES laboratories(id) ON DELETE CASCADE,
+    FOREIGN KEY (completed_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- 12. Allocation Requests (Change Requests) Table

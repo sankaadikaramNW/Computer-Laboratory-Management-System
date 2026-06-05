@@ -26,7 +26,7 @@
 
 <!-- KPI Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-sm-6">
+    <div class="col-md-4 col-sm-6">
         <div class="stats-card accent-green">
             <div>
                 <p class="stats-label mb-1">Today's Sessions</p>
@@ -38,7 +38,21 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6">
+    <div class="col-md-4 col-sm-6">
+        <a href="<?php echo URLROOT; ?>allocation/mySchedule" class="text-decoration-none d-block">
+        <div class="stats-card <?php echo count($data['pending_completion']) > 0 ? 'accent-yellow' : 'accent-blue'; ?>" style="cursor:pointer;">
+            <div>
+                <p class="stats-label mb-1">Pending Completion</p>
+                <h2 class="stats-count" style="color:<?php echo count($data['pending_completion']) > 0 ? 'var(--warning)' : 'var(--primary)'; ?>;"><?php echo count($data['pending_completion']); ?></h2>
+                <small style="color:var(--text-muted);font-size:0.75rem;">Requires completion log</small>
+            </div>
+            <div class="stats-icon-wrapper <?php echo count($data['pending_completion']) > 0 ? 'icon-yellow' : 'icon-blue'; ?>">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+        </div>
+        </a>
+    </div>
+    <div class="col-md-4 col-sm-12">
         <div class="stats-card accent-blue">
             <div>
                 <p class="stats-label mb-1">Upcoming Sessions</p>
@@ -56,6 +70,19 @@
 <div class="row g-4 mb-4">
     <!-- Today's Schedule -->
     <div class="col-lg-8">
+        <?php if(!empty($data['pending_completion'])): ?>
+            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between p-3 mb-4" role="alert" style="border-radius: 8px;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-hourglass-split fs-4 me-3 text-warning"></i>
+                    <div>
+                        <strong class="d-block" style="font-size: 0.95rem; color: #856404;">Action Required: Pending Completion Logs</strong>
+                        <span style="font-size: 0.82rem; color: #856404;">You have <strong><?php echo count($data['pending_completion']); ?></strong> session(s) that require completion logs.</span>
+                    </div>
+                </div>
+                <a href="<?php echo URLROOT; ?>allocation/mySchedule" class="btn btn-warning btn-sm text-dark fw-bold px-3">View List</a>
+            </div>
+        <?php endif; ?>
+
         <div class="card-clms h-100">
             <div class="card-clms-header">
                 <div class="d-flex align-items-center gap-2">
@@ -215,6 +242,11 @@
                         <i class="bi bi-exclamation-triangle me-1"></i>Fault Reports
                     </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-1 px-3" id="comp-tab" data-bs-toggle="tab" data-bs-target="#comp-pane" type="button" style="font-size:0.82rem;border-radius:6px;">
+                        <i class="bi bi-check-circle me-1"></i>Completed Sessions
+                    </button>
+                </li>
             </ul>
 
             <div class="tab-content" id="ticketTabsContent">
@@ -275,6 +307,30 @@
                             <?php endforeach; ?>
                         <?php else: ?>
                             <p class="text-center py-4" style="color:var(--text-muted);font-size:0.88rem;">No fault tickets submitted.</p>
+                        <?php endif; ?>
+                </div>
+
+                <!-- Completed Sessions -->
+                <div class="tab-pane fade" id="comp-pane" role="tabpanel" tabindex="0">
+                    <div style="max-height:260px;overflow-y:auto;">
+                        <?php if(!empty($data['recently_completed'])): ?>
+                            <?php foreach($data['recently_completed'] as $s): ?>
+                                <div class="mb-3 pb-3" style="border-bottom:1px solid var(--border);">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge bg-secondary-subtle text-secondary small"><?php echo e($s->lab_code); ?></span>
+                                        <span class="badge bg-success-subtle text-success small"><?php echo e($s->session_status); ?></span>
+                                    </div>
+                                    <p class="mb-1 fw-bold text-dark" style="font-size:0.82rem;"><?php echo e($s->lesson_name); ?></p>
+                                    <span style="font-size:0.72rem;color:var(--text-muted);">
+                                        <i class="bi bi-calendar-check me-1"></i>Completed: <?php echo date('d M Y H:i', strtotime($s->completed_at)); ?>
+                                    </span>
+                                    <?php if($s->instructor_remarks): ?>
+                                        <p class="mb-0 text-muted mt-1 small italic" style="font-size: 0.78rem;">&ldquo;<?php echo e($s->instructor_remarks); ?>&rdquo;</p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-center py-4" style="color:var(--text-muted);font-size:0.88rem;">No recently completed sessions.</p>
                         <?php endif; ?>
                     </div>
                 </div>

@@ -36,7 +36,7 @@ class AllocationModel extends Model {
      * Get allocation by ID
      */
     public function getAllocationById($id) {
-        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, i.user_id as instructor_user_id, les.lesson_name, les.lesson_code, les.duration as lesson_duration
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, i.trade as instructor_trade, i.user_id as instructor_user_id, les.lesson_name, les.lesson_code, les.duration as lesson_duration
                           FROM allocations a 
                           JOIN laboratories l ON a.lab_id = l.id 
                           JOIN instructors i ON a.instructor_id = i.id 
@@ -360,5 +360,125 @@ class AllocationModel extends Model {
         $this->db->bind(':start', $start);
         $this->db->bind(':end', $end);
         return $this->db->resultSet();
+    }
+
+    /**
+     * Get sessions pending completion for instructor (date is today or in the past, status is Scheduled/In Progress)
+     */
+    public function getPendingCompletionSessions($instructorId) {
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, les.lesson_name, les.lesson_code 
+                          FROM allocations a 
+                          JOIN laboratories l ON a.lab_id = l.id 
+                          JOIN lessons les ON a.lesson_id = les.id 
+                          WHERE a.instructor_id = :instructor_id 
+                            AND (a.date < CURDATE() OR (a.date = CURDATE() AND a.start_time <= CURTIME())) 
+                            AND a.session_status IN ('Scheduled', 'In Progress')
+                          ORDER BY a.date DESC, a.start_time DESC");
+        $this->db->bind(':instructor_id', $instructorId);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get recently completed sessions for instructor
+     */
+    public function getRecentlyCompletedSessions($instructorId, $limit = 5) {
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, les.lesson_name, les.lesson_code 
+                          FROM allocations a 
+                          JOIN laboratories l ON a.lab_id = l.id 
+                          JOIN lessons les ON a.lesson_id = les.id 
+                          WHERE a.instructor_id = :instructor_id 
+                            AND a.session_status IN ('Completed Successfully', 'Partially Completed') 
+                          ORDER BY a.completed_at DESC 
+                          LIMIT :limit");
+        $this->db->bind(':instructor_id', $instructorId);
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get upcoming sessions for instructor
+     */
+    public function getUpcomingSessionsForInstructor($instructorId, $limit = 5) {
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, les.lesson_name, les.lesson_code 
+                          FROM allocations a 
+                          JOIN laboratories l ON a.lab_id = l.id 
+                          JOIN lessons les ON a.lesson_id = les.id 
+                          WHERE a.instructor_id = :instructor_id 
+                            AND (a.date > CURDATE() OR (a.date = CURDATE() AND a.start_time > CURTIME())) 
+                            AND a.session_status = 'Scheduled'
+                          ORDER BY a.date ASC, a.start_time ASC 
+                          LIMIT :limit");
+        $this->db->bind(':instructor_id', $instructorId);
+        $this->db->bind(':limit', $limit);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get instructor's completed / cancelled / rescheduled session history
+     */
+    public function getInstructorSessionHistory($instructorId) {
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, les.lesson_name, les.lesson_code 
+                          FROM allocations a 
+                          JOIN laboratories l ON a.lab_id = l.id 
+                          JOIN lessons les ON a.lesson_id = les.id 
+                          WHERE a.instructor_id = :instructor_id 
+                            AND a.session_status IN ('Completed Successfully', 'Partially Completed', 'Cancelled', 'Rescheduled')
+                          ORDER BY a.date DESC, a.start_time DESC");
+        $this->db->bind(':instructor_id', $instructorId);
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Save session completion details
+     */
+    public function completeSession($id, $status, $remarks, $userId) {
+        $this->db->query("UPDATE allocations 
+                          SET session_status = :status, 
+                              instructor_remarks = :remarks, 
+                              completed_at = NOW(), 
+                              completed_by = :completed_by 
+                          WHERE id = :id");
+        $this->db->bind(':status', $status);
+        $this->db->bind(':remarks', $remarks ?: null);
+        $this->db->bind(':completed_by', $userId);
+        $this->db->bind(':id', $id);
+        return $this->db->execute();
+    }
+
+    /**
+     * Get administrator dashboard stats today
+     */
+    public function getAdminDashboardStats() {
+        $stats = [];
+        
+        // Scheduled Sessions Today
+        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Scheduled'");
+        $row = $this->db->single();
+        $stats['scheduled_today'] = $row ? (int)$row->count : 0;
+        
+        // Completed Sessions Today
+        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status IN ('Completed Successfully', 'Partially Completed', 'Completed')");
+        $row = $this->db->single();
+        $stats['completed_today'] = $row ? (int)$row->count : 0;
+        
+        // Cancelled Sessions Today or Total (let's do total cancelled as per request)
+        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE session_status = 'Cancelled'");
+        $row = $this->db->single();
+        $stats['cancelled_total'] = $row ? (int)$row->count : 0;
+        
+        // Completion Percentage Today
+        // Percentage = (Completed Today / (Scheduled Today + Completed Today + Cancelled Today)) * 100
+        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Cancelled'");
+        $row = $this->db->single();
+        $cancelled_today = $row ? (int)$row->count : 0;
+        
+        $total_today = $stats['scheduled_today'] + $stats['completed_today'] + $cancelled_today;
+        if ($total_today > 0) {
+            $stats['completion_percentage'] = round(($stats['completed_today'] / $total_today) * 100);
+        } else {
+            $stats['completion_percentage'] = 100; // default to 100 if no sessions scheduled
+        }
+        
+        return $stats;
     }
 }

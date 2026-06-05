@@ -339,4 +339,37 @@ class InquiryModel extends Model {
     public function getAllRanks() {
         return ['LAC','CPL','SGT','FSGT','WO','PLT OF','FG OFF','FLT LT','SQN LDR','WG CDR','GP CAPT'];
     }
+
+    /**
+     * Get session completion records for admin audit
+     */
+    public function getSessionCompletionRecords($filters = []) {
+        $sql = "SELECT a.id, a.date, a.start_time, a.end_time, a.remarks, a.session_status, 
+                       a.instructor_remarks, a.completed_at, a.completed_by,
+                       i.id as instructor_id, i.service_no, i.rank, i.full_name as instructor_name, i.trade, i.email,
+                       l.lab_code, l.lab_name,
+                       les.lesson_code, les.lesson_name
+                FROM allocations a
+                JOIN instructors i  ON a.instructor_id = i.id
+                JOIN laboratories l ON a.lab_id = l.id
+                JOIN lessons les    ON a.lesson_id = les.id
+                WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['service_no'])) { $sql .= " AND i.service_no LIKE :service_no"; $params[':service_no'] = '%'.$filters['service_no'].'%'; }
+        if (!empty($filters['name']))        { $sql .= " AND i.full_name  LIKE :name";       $params[':name']       = '%'.$filters['name'].'%'; }
+        if (!empty($filters['rank']))        { $sql .= " AND i.rank = :rank";                $params[':rank']       = $filters['rank']; }
+        if (!empty($filters['trade']))       { $sql .= " AND i.trade LIKE :trade";           $params[':trade']      = '%'.$filters['trade'].'%'; }
+        if (!empty($filters['lab_id']))      { $sql .= " AND a.lab_id = :lab_id";            $params[':lab_id']     = $filters['lab_id']; }
+        if (!empty($filters['lesson_id']))   { $sql .= " AND a.lesson_id = :lesson_id";      $params[':lesson_id']  = $filters['lesson_id']; }
+        if (!empty($filters['status']))     { $sql .= " AND a.session_status = :status";    $params[':status']     = $filters['status']; }
+        
+        $this->buildDateWhere($sql, $params, $filters['date_from'] ?? '', $filters['date_to'] ?? '');
+
+        $sql .= " ORDER BY a.completed_at DESC, a.date DESC";
+
+        $this->db->query($sql);
+        foreach ($params as $k => $v) $this->db->bind($k, $v);
+        return $this->db->resultSet();
+    }
 }

@@ -39,6 +39,8 @@ class DashboardController extends Controller {
         $noticeModel = $this->model('NoticeModel');
         $auditModel = $this->model('AuditModel');
 
+        $statsToday = $allocModel->getAdminDashboardStats();
+
         // Compile counts
         $data = [
             'title' => 'Admin Dashboard',
@@ -54,7 +56,8 @@ class DashboardController extends Controller {
             'upcoming_sessions' => $allocModel->getUpcomingSessions(5),
             'recent_notices' => $noticeModel->getActiveNotices(),
             'recent_logs' => array_slice($auditModel->getAllLogs(), 0, 8),
-            'utilization' => $labModel->getLabUtilizationStats()
+            'utilization' => $labModel->getLabUtilizationStats(),
+            'stats_today' => $statsToday
         ];
 
         $this->view('templates/header', $data);
@@ -124,6 +127,9 @@ class DashboardController extends Controller {
             if ($r->status === 'pending') $pendingRequests++;
         }
 
+        $pendingCompletion = $allocModel->getPendingCompletionSessions($instructorId);
+        $recentlyCompleted = $allocModel->getRecentlyCompletedSessions($instructorId, 5);
+
         $data = [
             'title' => 'Instructor Dashboard',
             'active_menu' => 'dashboard',
@@ -138,7 +144,9 @@ class DashboardController extends Controller {
             'week_end' => $weekEnd,
             'pending_requests_count' => $pendingRequests,
             'unread_notifs' => $notifModel->getUnreadCount($userId),
-            'next_session' => $nextSession
+            'next_session' => $nextSession,
+            'pending_completion' => $pendingCompletion,
+            'recently_completed' => $recentlyCompleted
         ];
 
         $this->view('templates/header', $data);
