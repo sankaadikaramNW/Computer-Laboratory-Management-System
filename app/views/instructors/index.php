@@ -52,7 +52,8 @@
                         <tr>
                             <td>
                                 <?php if(!empty($i->profile_photo)): 
-                                    $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $i->profile_photo);
+                                    $isWebp = (pathinfo($i->profile_photo, PATHINFO_EXTENSION) === 'webp');
+                                    $thumb = $isWebp ? preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $i->profile_photo) : $i->profile_photo;
                                     $photoVersion = !empty($i->photo_uploaded_at) ? strtotime($i->photo_uploaded_at) : time();
                                 ?>
                                     <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>?v=<?php echo $photoVersion; ?>" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($i->profile_photo); ?>?v=<?php echo $photoVersion; ?>')">
@@ -436,8 +437,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                </button>`
                             : '';
 
+                        const isWebp = i.profile_photo && i.profile_photo.toLowerCase().endsWith('.webp');
+                        const thumb = isWebp ? i.profile_photo.replace(/(\.[a-zA-Z0-9]+)$/, '_thumb$1') : i.profile_photo;
                         const photoMarkup = i.profile_photo && i.profile_photo !== ''
-                            ? `<img src="${URLROOT}uploads/instructors/${i.profile_photo.replace(/(\.[a-zA-Z0-9]+)$/, '_thumb$1')}?v=${Date.now()}" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('${URLROOT}uploads/instructors/${i.profile_photo}?v=${Date.now()}')">`
+                            ? `<img src="${URLROOT}uploads/instructors/${thumb}?v=${Date.now()}" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('${URLROOT}uploads/instructors/${i.profile_photo}?v=${Date.now()}')">`
                             : `<div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width:40px; height:40px; color:#888;">
                                     <i class="bi bi-person" style="font-size:1.4rem;"></i>
                                </div>`;

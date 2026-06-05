@@ -150,7 +150,7 @@ class InstructorController extends Controller {
                 if ($profilePhoto) {
                     $uploadDir = 'uploads/instructors/';
                     $oldPath = $uploadDir . $profilePhoto;
-                    $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto);
+                    $oldThumbPath = $uploadDir . preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $profilePhoto);
                     if (file_exists($oldPath)) @unlink($oldPath);
                     if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
                     $profilePhoto = null;
@@ -250,7 +250,7 @@ class InstructorController extends Controller {
                 if ($profilePhoto) {
                     $uploadDir = 'uploads/instructors/';
                     $oldPath = $uploadDir . $profilePhoto;
-                    $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto);
+                    $oldThumbPath = $uploadDir . preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $profilePhoto);
                     if (file_exists($oldPath)) @unlink($oldPath);
                     if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
                     $profilePhoto = null;
@@ -362,7 +362,7 @@ class InstructorController extends Controller {
                 if ($photoUploaded && $profilePhoto) {
                     $uploadDir = 'uploads/instructors/';
                     @unlink($uploadDir . $profilePhoto);
-                    @unlink($uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto));
+                    @unlink($uploadDir . preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $profilePhoto));
                 }
                 $data = [
                     'title' => 'Register Instructor',
@@ -633,16 +633,11 @@ class InstructorController extends Controller {
             $origExtension = strtolower($origExtension);
 
             $newFilename = $baseName . "." . $origExtension;
-            $newThumbFilename = $baseName . "_thumb." . $origExtension;
-
             $destPath = $uploadDir . $newFilename;
-            $thumbPath = $uploadDir . $newThumbFilename;
 
             if (!move_uploaded_file($file['tmp_name'], $destPath)) {
                 throw new Exception("Failed to save uploaded image.");
             }
-            // Duplicate original file for thumbnail
-            copy($destPath, $thumbPath);
         }
 
         // Delete old photo and thumbnail if they exist and are different

@@ -4,7 +4,8 @@
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
     <div class="d-flex align-items-center gap-3">
         <?php if(!empty($_SESSION['instructor_photo'])): 
-            $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $_SESSION['instructor_photo']);
+            $isWebp = (pathinfo($_SESSION['instructor_photo'], PATHINFO_EXTENSION) === 'webp');
+            $thumb = $isWebp ? preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $_SESSION['instructor_photo']) : $_SESSION['instructor_photo'];
         ?>
             <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>?v=<?php echo time(); ?>" class="rounded-circle border border-primary shadow-sm" style="width:50px; height:50px; object-fit:cover;">
         <?php else: ?>

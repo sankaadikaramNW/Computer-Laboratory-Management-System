@@ -314,7 +314,8 @@
                 <div class="dropdown">
                     <button class="btn btn-link dropdown-toggle profile-dropdown d-flex align-items-center gap-2 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <?php if(isInstructor() && !empty($_SESSION['instructor_photo'])): 
-                            $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $_SESSION['instructor_photo']);
+                            $isWebp = (pathinfo($_SESSION['instructor_photo'], PATHINFO_EXTENSION) === 'webp');
+                            $thumb = $isWebp ? preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $_SESSION['instructor_photo']) : $_SESSION['instructor_photo'];
                         ?>
                             <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>?v=<?php echo time(); ?>" class="rounded-circle border border-primary" style="width:32px; height:32px; object-fit:cover;">
                         <?php else: ?>
