@@ -50,6 +50,7 @@
                 <?php if(!empty($data['instructors'])): ?>
                     <?php foreach($data['instructors'] as $i): ?>
                         <tr>
+                            <td>
                                 <?php if(!empty($i->profile_photo)): 
                                     $thumb = preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $i->profile_photo);
                                 ?>
