@@ -125,7 +125,6 @@
                         <i class="bi bi-wrench-adjustable"></i> Maintenance
                     </a>
                 </li>
-
                 <li class="sidebar-menu-header">Operations</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'inq_instructor') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>inquiry/instructorActivity" class="sidebar-link">
@@ -157,7 +156,11 @@
                         <i class="bi bi-cpu-fill"></i> Equipment Usage
                     </a>
                 </li>
-
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'session_completion_records') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>inquiry/sessionCompletionRecords" class="sidebar-link">
+                        <i class="bi bi-journal-check"></i> Session Completion Records
+                    </a>
+                </li>
                 <li class="sidebar-menu-header">Administration</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'user_management') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>user" class="sidebar-link">
@@ -194,9 +197,19 @@
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_schedule') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>allocation/mySchedule" class="sidebar-link">
+                        <i class="bi bi-calendar-check-fill"></i> My Schedule
+                    </a>
+                </li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'calendar') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>allocation/calendar" class="sidebar-link">
                         <i class="bi bi-calendar3"></i> School Calendar
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_history') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>allocation/myHistory" class="sidebar-link">
+                        <i class="bi bi-clock-history"></i> My Session History
                     </a>
                 </li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'requests') ? 'active' : ''; ?>">

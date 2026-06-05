@@ -1,0 +1,20 @@
+# ── Credentials & Environment ──────────────────────────────────────────────
+deploy_infinityfree/config_for_infinityfree.php
+deploy_infinityfree/htdocs/
+
+# ── Local dev config (contains localhost DB password) ──────────────────────
+# app/config/config.php is committed with safe defaults (localhost/root/'')
+
+# ── OS & Editor files ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE files ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-workspace
+
+# ── Logs & temp ────────────────────────────────────────────────────────────
+*.log
+/tmp/
