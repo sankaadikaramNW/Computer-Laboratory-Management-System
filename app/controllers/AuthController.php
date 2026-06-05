@@ -124,6 +124,7 @@ class AuthController extends Controller {
                         $_SESSION['instructor_name'] = $instructor->full_name;
                         $_SESSION['instructor_rank'] = $instructor->rank;
                         $_SESSION['instructor_service_no'] = $instructor->service_no;
+                        $_SESSION['instructor_photo'] = $instructor->profile_photo;
                     }
                 }
 

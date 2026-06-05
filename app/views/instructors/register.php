@@ -19,7 +19,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="<?php echo URLROOT; ?>instructor/register" method="POST" class="needs-validation">
+    <form action="<?php echo URLROOT; ?>instructor/register" method="POST" enctype="multipart/form-data" class="needs-validation">
         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
 
         <div class="row">
@@ -31,6 +31,37 @@
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3">
+                            <!-- Profile Photograph Upload Area -->
+                            <div class="col-12 text-center mb-4">
+                                <label class="form-label d-block fw-semibold text-muted mb-2">Profile Photograph</label>
+                                <div class="position-relative d-inline-block">
+                                    <div class="avatar-preview-container rounded-circle border border-3 border-primary shadow-sm overflow-hidden" style="width: 130px; height: 130px; background: #f8f9fa; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                        <img id="avatar-preview-img" src="" alt="Avatar Preview" class="w-100 h-100 object-fit-cover d-none">
+                                        <div id="avatar-placeholder-svg" style="width: 100%; height: 100%;">
+                                            <svg class="text-muted" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" style="color: #dee2e6;">
+                                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 d-flex justify-content-center gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('profile_photo').click();">
+                                            <i class="bi bi-camera me-1"></i> Upload
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btn-view-full" onclick="viewFullSize();">
+                                            <i class="bi bi-eye me-1"></i> View Full
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger d-none" id="btn-remove-photo" onclick="clearPhotoSelection();">
+                                            <i class="bi bi-trash me-1"></i> Remove
+                                        </button>
+                                    </div>
+                                    <input type="file" name="profile_photo" id="profile_photo" class="d-none" accept=".jpg,.jpeg,.png,.webp" onchange="previewPhoto(this);">
+                                    <input type="hidden" name="remove_photo" id="remove_photo" value="0">
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    Allowed formats: JPG, JPEG, PNG, WEBP (Max: 5MB, Recommended: 400x400px)
+                                </div>
+                            </div>
+
                             <div class="col-md-6">
                                 <label for="service_no" class="form-label">Service Number <span class="text-danger">*</span></label>
                                 <input type="text" name="service_no" id="service_no" class="form-control" 
@@ -202,4 +233,71 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+// Profile Photograph Helpers
+function previewPhoto(input) {
+    const file = input.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File size exceeds 5MB limit.");
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const previewImg = document.getElementById('avatar-preview-img');
+            const placeholder = document.getElementById('avatar-placeholder-svg');
+            const removeBtn = document.getElementById('btn-remove-photo');
+            const viewFullBtn = document.getElementById('btn-view-full');
+
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            removeBtn.classList.remove('d-none');
+            viewFullBtn.classList.remove('d-none');
+            
+            document.getElementById('remove_photo').value = '0';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearPhotoSelection() {
+    const fileInput = document.getElementById('profile_photo');
+    const previewImg = document.getElementById('avatar-preview-img');
+    const placeholder = document.getElementById('avatar-placeholder-svg');
+    const removeBtn = document.getElementById('btn-remove-photo');
+    const viewFullBtn = document.getElementById('btn-view-full');
+
+    fileInput.value = '';
+    previewImg.src = '';
+    previewImg.classList.add('d-none');
+    placeholder.classList.remove('d-none');
+    removeBtn.classList.add('d-none');
+    viewFullBtn.classList.add('d-none');
+
+    document.getElementById('remove_photo').value = '1';
+}
+
+function viewFullSize() {
+    const previewImg = document.getElementById('avatar-preview-img');
+    if (previewImg.src && !previewImg.classList.contains('d-none')) {
+        document.getElementById('full-modal-img').src = previewImg.src;
+        const modal = new bootstrap.Modal(document.getElementById('fullPhotoModal'));
+        modal.show();
+    }
+}
 </script>
+
+<!-- Full Size Modal -->
+<div class="modal fade" id="fullPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: transparent; border: none;">
+            <div class="modal-body text-center p-0 position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                <img id="full-modal-img" src="" class="img-fluid rounded-3 shadow-lg" style="max-height: 80vh; max-width: 100%;">
+            </div>
+        </div>
+    </div>
+</div>

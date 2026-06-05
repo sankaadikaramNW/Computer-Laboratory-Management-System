@@ -52,8 +52,8 @@ class InstructorModel extends Model {
      * Create instructor profile
      */
     public function createInstructor($data) {
-        $this->db->query("INSERT INTO instructors (user_id, service_no, rank, full_name, trade, contact_no, email, status) 
-                          VALUES (:user_id, :service_no, :rank, :full_name, :trade, :contact_no, :email, :status)");
+        $this->db->query("INSERT INTO instructors (user_id, service_no, rank, full_name, trade, contact_no, email, profile_photo, photo_uploaded_at, status) 
+                          VALUES (:user_id, :service_no, :rank, :full_name, :trade, :contact_no, :email, :profile_photo, :photo_uploaded_at, :status)");
         
         $this->db->bind(':user_id', $data['user_id'] ?: null);
         $this->db->bind(':service_no', $data['service_no']);
@@ -62,6 +62,8 @@ class InstructorModel extends Model {
         $this->db->bind(':trade', $data['trade']);
         $this->db->bind(':contact_no', $data['contact_no']);
         $this->db->bind(':email', $data['email']);
+        $this->db->bind(':profile_photo', $data['profile_photo'] ?? null);
+        $this->db->bind(':photo_uploaded_at', $data['photo_uploaded_at'] ?? null);
         $this->db->bind(':status', $data['status']);
         
         return $this->db->execute();
@@ -79,6 +81,8 @@ class InstructorModel extends Model {
                               trade = :trade, 
                               contact_no = :contact_no, 
                               email = :email, 
+                              profile_photo = :profile_photo,
+                              photo_uploaded_at = :photo_uploaded_at,
                               status = :status 
                           WHERE id = :id");
         
@@ -89,6 +93,8 @@ class InstructorModel extends Model {
         $this->db->bind(':trade', $data['trade']);
         $this->db->bind(':contact_no', $data['contact_no']);
         $this->db->bind(':email', $data['email']);
+        $this->db->bind(':profile_photo', $data['profile_photo'] ?? null);
+        $this->db->bind(':photo_uploaded_at', $data['photo_uploaded_at'] ?? null);
         $this->db->bind(':status', $data['status']);
         $this->db->bind(':id', $id);
         
@@ -98,8 +104,14 @@ class InstructorModel extends Model {
     /**
      * Instructor self-profile update (restricted fields only)
      */
-    public function updateInstructorSelf($id, $contactNo, $email) {
-        $this->db->query("UPDATE instructors SET contact_no = :contact_no, email = :email WHERE id = :id");
+    public function updateInstructorSelf($id, $contactNo, $email, $photoPath = null, $uploadedAt = null) {
+        if ($photoPath !== null) {
+            $this->db->query("UPDATE instructors SET contact_no = :contact_no, email = :email, profile_photo = :profile_photo, photo_uploaded_at = :photo_uploaded_at WHERE id = :id");
+            $this->db->bind(':profile_photo', $photoPath);
+            $this->db->bind(':photo_uploaded_at', $uploadedAt);
+        } else {
+            $this->db->query("UPDATE instructors SET contact_no = :contact_no, email = :email WHERE id = :id");
+        }
         $this->db->bind(':contact_no', $contactNo);
         $this->db->bind(':email', $email);
         $this->db->bind(':id', $id);

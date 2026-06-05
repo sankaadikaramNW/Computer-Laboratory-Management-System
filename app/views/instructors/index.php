@@ -34,6 +34,7 @@
         <table class="table table-hover table-clms align-middle">
             <thead>
                 <tr>
+                    <th style="width: 60px;">Photo</th>
                     <th>Service No</th>
                     <th>Rank</th>
                     <th>Full Name</th>
@@ -49,6 +50,17 @@
                 <?php if(!empty($data['instructors'])): ?>
                     <?php foreach($data['instructors'] as $i): ?>
                         <tr>
+                            <td>
+                                <?php if(!empty($i->profile_photo)): 
+                                    $thumb = str_replace('.webp', '_thumb.webp', $i->profile_photo);
+                                ?>
+                                    <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('<?php echo URLROOT; ?>uploads/instructors/<?php echo e($i->profile_photo); ?>')">
+                                <?php else: ?>
+                                    <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width:40px; height:40px; color:#888;">
+                                        <i class="bi bi-person" style="font-size:1.4rem;"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td><span class="fw-bold"><?php echo e($i->service_no); ?></span></td>
                             <td><span class="badge bg-secondary"><?php echo e($i->rank); ?></span></td>
                             <td><span class="fw-semibold"><?php echo e($i->full_name); ?></span></td>
@@ -81,6 +93,7 @@
                                             data-email="<?php echo e($i->email); ?>"
                                             data-userid="<?php echo $i->user_id; ?>"
                                             data-status="<?php echo e($i->status); ?>"
+                                            data-photo="<?php echo e($i->profile_photo); ?>"
                                             data-bs-toggle="modal" data-bs-target="#editInstructorModal"
                                             title="Edit Profile">
                                         <i class="bi bi-pencil-fill"></i>
@@ -110,7 +123,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="9" class="text-center py-4 text-muted">No instructor profiles found.</td>
+                        <td colspan="10" class="text-center py-4 text-muted">No instructor profiles found.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -126,9 +139,40 @@
                 <h5 class="modal-title fw-bold" id="editInstructorModalLabel"><i class="bi bi-pencil-fill me-2"></i> Edit Instructor Profile</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="" method="POST" id="editForm">
+            <form action="" method="POST" id="editForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+
+                    <!-- Profile Photograph Area -->
+                    <div class="mb-4 text-center">
+                        <label class="form-label d-block fw-semibold text-muted mb-2">Profile Photograph</label>
+                        <div class="position-relative d-inline-block">
+                            <div class="avatar-preview-container rounded-circle border border-3 border-primary shadow-sm overflow-hidden" style="width: 120px; height: 120px; background: #f8f9fa; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                                <img id="edit-avatar-preview-img" src="" alt="Avatar Preview" class="w-100 h-100 object-fit-cover d-none">
+                                <div id="edit-avatar-placeholder-svg" style="width: 100%; height: 100%;">
+                                    <svg class="text-muted" width="100%" height="100%" viewBox="0 0 24 24" fill="currentColor" style="color: #dee2e6;">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-3 d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="document.getElementById('edit_profile_photo').click();">
+                                    <i class="bi bi-camera me-1"></i> Upload
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="edit-btn-view-full" onclick="viewEditFullSize();">
+                                    <i class="bi bi-eye me-1"></i> View Full
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger d-none" id="edit-btn-remove-photo" onclick="clearEditPhotoSelection();">
+                                    <i class="bi bi-trash me-1"></i> Remove
+                                </button>
+                            </div>
+                            <input type="file" name="profile_photo" id="edit_profile_photo" class="d-none" accept=".jpg,.jpeg,.png,.webp" onchange="previewEditPhoto(this);">
+                            <input type="hidden" name="remove_photo" id="edit_remove_photo" value="0">
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Formats: JPG, JPEG, PNG, WEBP (Max: 5MB)
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="edit_service_no" class="form-label small fw-semibold">Service Number</label>
@@ -303,6 +347,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('edit_email').value      = this.getAttribute('data-email');
                 document.getElementById('edit_user_id').value    = this.getAttribute('data-userid') || '';
                 document.getElementById('edit_status').value     = this.getAttribute('data-status');
+
+                // Photo preview handling
+                const photo = this.getAttribute('data-photo');
+                const editPreviewImg = document.getElementById('edit-avatar-preview-img');
+                const editPlaceholder = document.getElementById('edit-avatar-placeholder-svg');
+                const editRemoveBtn = document.getElementById('edit-btn-remove-photo');
+                const editViewFullBtn = document.getElementById('edit-btn-view-full');
+                
+                document.getElementById('edit_profile_photo').value = '';
+                document.getElementById('edit_remove_photo').value = '0';
+
+                if (photo && photo !== '') {
+                    editPreviewImg.src = URLROOT + 'uploads/instructors/' + photo;
+                    editPreviewImg.classList.remove('d-none');
+                    editPlaceholder.classList.add('d-none');
+                    editRemoveBtn.classList.remove('d-none');
+                    editViewFullBtn.classList.remove('d-none');
+                } else {
+                    editPreviewImg.src = '';
+                    editPreviewImg.classList.add('d-none');
+                    editPlaceholder.classList.remove('d-none');
+                    editRemoveBtn.classList.add('d-none');
+                    editViewFullBtn.classList.add('d-none');
+                }
             });
         });
     }
@@ -367,8 +435,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                </button>`
                             : '';
 
+                        const photoMarkup = i.profile_photo && i.profile_photo !== ''
+                            ? `<img src="${URLROOT}uploads/instructors/${i.profile_photo.replace('.webp', '_thumb.webp')}" class="rounded-circle border border-primary" style="width:40px; height:40px; object-fit:cover; cursor:pointer;" onclick="viewFullSizeSrc('${URLROOT}uploads/instructors/${i.profile_photo}')">`
+                            : `<div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" style="width:40px; height:40px; color:#888;">
+                                    <i class="bi bi-person" style="font-size:1.4rem;"></i>
+                               </div>`;
+
                         html += `
                             <tr>
+                                <td>${photoMarkup}</td>
                                 <td><span class="fw-bold">${escapeHtml(i.service_no)}</span></td>
                                 <td><span class="badge bg-secondary">${escapeHtml(i.rank)}</span></td>
                                 <td><span class="fw-semibold">${escapeHtml(i.full_name)}</span></td>
@@ -389,6 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 data-email="${escapeHtml(i.email !== 'N/A' ? i.email : '')}"
                                                 data-userid="${i.user_id || ''}"
                                                 data-status="${escapeHtml(i.status)}"
+                                                data-photo="${escapeHtml(i.profile_photo)}"
                                                 data-bs-toggle="modal" data-bs-target="#editInstructorModal"
                                                 title="Edit Profile">
                                             <i class="bi bi-pencil-fill"></i>
@@ -409,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     bindEditButtons();
                     bindAddLoginButtons();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">No instructor profiles found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-muted">No instructor profiles found.</td></tr>`;
                 }
             })
             .catch(err => console.error('AJAX Search Failed:', err));
@@ -428,6 +504,77 @@ document.addEventListener('DOMContentLoaded', function() {
     bindEditButtons();
     bindAddLoginButtons();
 });
+
+// Edit Photo Helpers
+function previewEditPhoto(input) {
+    const file = input.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File size exceeds 5MB limit.");
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const previewImg = document.getElementById('edit-avatar-preview-img');
+            const placeholder = document.getElementById('edit-avatar-placeholder-svg');
+            const removeBtn = document.getElementById('edit-btn-remove-photo');
+            const viewFullBtn = document.getElementById('edit-btn-view-full');
+
+            previewImg.src = e.target.result;
+            previewImg.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            removeBtn.classList.remove('d-none');
+            viewFullBtn.classList.remove('d-none');
+            
+            document.getElementById('edit_remove_photo').value = '0';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearEditPhotoSelection() {
+    const fileInput = document.getElementById('edit_profile_photo');
+    const previewImg = document.getElementById('edit-avatar-preview-img');
+    const placeholder = document.getElementById('edit-avatar-placeholder-svg');
+    const removeBtn = document.getElementById('edit-btn-remove-photo');
+    const viewFullBtn = document.getElementById('edit-btn-view-full');
+
+    fileInput.value = '';
+    previewImg.src = '';
+    previewImg.classList.add('d-none');
+    placeholder.classList.remove('d-none');
+    removeBtn.classList.add('d-none');
+    viewFullBtn.classList.add('d-none');
+
+    document.getElementById('edit_remove_photo').value = '1';
+}
+
+function viewEditFullSize() {
+    const previewImg = document.getElementById('edit-avatar-preview-img');
+    if (previewImg.src && !previewImg.classList.contains('d-none')) {
+        viewFullSizeSrc(previewImg.src);
+    }
+}
+
+function viewFullSizeSrc(src) {
+    document.getElementById('full-modal-img').src = src;
+    const modal = new bootstrap.Modal(document.getElementById('fullPhotoModal'));
+    modal.show();
+}
 </script>
+
+<!-- Full Size Modal -->
+<div class="modal fade" id="fullPhotoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: transparent; border: none;">
+            <div class="modal-body text-center p-0 position-relative">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                <img id="full-modal-img" src="" class="img-fluid rounded-3 shadow-lg" style="max-height: 80vh; max-width: 100%;">
+            </div>
+        </div>
+    </div>
+</div>
 
 

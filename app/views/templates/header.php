@@ -313,7 +313,13 @@
                 <!-- User Profile Dropdown -->
                 <div class="dropdown">
                     <button class="btn btn-link dropdown-toggle profile-dropdown d-flex align-items-center gap-2 p-0 text-decoration-none" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle fs-4 text-secondary"></i>
+                        <?php if(isInstructor() && !empty($_SESSION['instructor_photo'])): 
+                            $thumb = str_replace('.webp', '_thumb.webp', $_SESSION['instructor_photo']);
+                        ?>
+                            <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary" style="width:32px; height:32px; object-fit:cover;">
+                        <?php else: ?>
+                            <i class="bi bi-person-circle fs-4 text-secondary"></i>
+                        <?php endif; ?>
                         <span class="d-none d-lg-inline small fw-semibold text-capitalize text-wrap text-start" style="color: var(--text-primary); max-width: 120px;">
                             <?php 
                             if (isInstructor() && isset($_SESSION['instructor_name'])) {

@@ -2,14 +2,24 @@
 
 <!-- Page Header -->
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-    <div>
-        <h4 class="mb-1" style="font-family:var(--font-heading);color:var(--text-h);">
-            <i class="bi bi-person-workspace me-2" style="color:var(--primary);"></i>
-            Welcome, <?php echo isset($_SESSION['instructor_rank']) ? e($_SESSION['instructor_rank']) . ' ' . e($_SESSION['instructor_name']) : e($_SESSION['username']); ?>
-        </h4>
-        <p class="mb-0" style="color:var(--text-muted);font-size:0.85rem;">
-            <?php echo date('l, d F Y'); ?> &mdash; Your lab schedule &amp; requests
-        </p>
+    <div class="d-flex align-items-center gap-3">
+        <?php if(!empty($_SESSION['instructor_photo'])): 
+            $thumb = str_replace('.webp', '_thumb.webp', $_SESSION['instructor_photo']);
+        ?>
+            <img src="<?php echo URLROOT; ?>uploads/instructors/<?php echo $thumb; ?>" class="rounded-circle border border-primary shadow-sm" style="width:50px; height:50px; object-fit:cover;">
+        <?php else: ?>
+            <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center shadow-sm" style="width:50px; height:50px; color:var(--primary);">
+                <i class="bi bi-person-workspace fs-4"></i>
+            </div>
+        <?php endif; ?>
+        <div>
+            <h4 class="mb-1" style="font-family:var(--font-heading);color:var(--text-h);">
+                Welcome, <?php echo isset($_SESSION['instructor_rank']) ? e($_SESSION['instructor_rank']) . ' ' . e($_SESSION['instructor_name']) : e($_SESSION['username']); ?>
+            </h4>
+            <p class="mb-0" style="color:var(--text-muted);font-size:0.85rem;">
+                <?php echo date('l, d F Y'); ?> &mdash; Your lab schedule &amp; requests
+            </p>
+        </div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="<?php echo URLROOT; ?>allocation/calendar" class="btn btn-primary btn-sm">

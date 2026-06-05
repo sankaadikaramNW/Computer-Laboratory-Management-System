@@ -74,6 +74,16 @@ class InstructorController extends Controller {
                 redirect('instructor');
             }
 
+            $profilePhoto = null;
+            if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo']);
+                } catch (Exception $e) {
+                    flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
+                    redirect('instructor');
+                }
+            }
+
             $data = [
                 'user_id' => $userId,
                 'service_no' => $serviceNo,
@@ -82,6 +92,8 @@ class InstructorController extends Controller {
                 'trade' => $trade,
                 'contact_no' => $contactNo,
                 'email' => $email,
+                'profile_photo' => $profilePhoto,
+                'photo_uploaded_at' => $profilePhoto ? date('Y-m-d H:i:s') : null,
                 'status' => $status
             ];
 
@@ -129,6 +141,33 @@ class InstructorController extends Controller {
                 redirect('instructor');
             }
 
+            $instructor = $this->instructorModel->getInstructorById($id);
+            $profilePhoto = $instructor->profile_photo;
+            $photoUploadedAt = $instructor->photo_uploaded_at;
+
+            // Check if removing photo
+            if (isset($_POST['remove_photo']) && $_POST['remove_photo'] == '1') {
+                if ($profilePhoto) {
+                    $uploadDir = 'uploads/instructors/';
+                    $oldPath = $uploadDir . $profilePhoto;
+                    $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto);
+                    if (file_exists($oldPath)) @unlink($oldPath);
+                    if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
+                    $profilePhoto = null;
+                    $photoUploadedAt = null;
+                }
+            }
+
+            if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo);
+                    $photoUploadedAt = date('Y-m-d H:i:s');
+                } catch (Exception $e) {
+                    flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
+                    redirect('instructor');
+                }
+            }
+
             $data = [
                 'user_id' => $userId,
                 'service_no' => $serviceNo,
@@ -137,6 +176,8 @@ class InstructorController extends Controller {
                 'trade' => $trade,
                 'contact_no' => $contactNo,
                 'email' => $email,
+                'profile_photo' => $profilePhoto,
+                'photo_uploaded_at' => $photoUploadedAt,
                 'status' => $status
             ];
 
@@ -200,14 +241,42 @@ class InstructorController extends Controller {
             $contactNo = trim($_POST['contact_no']);
             $email = trim($_POST['email']);
 
-            if ($this->instructorModel->updateInstructorSelf($instructorId, $contactNo, $email)) {
-                $this->logActivity('UPDATE_SELF_PROFILE', 'INSTRUCTORS', "Instructor self-updated contact info (ID: {$instructorId})");
+            $instructor = $this->instructorModel->getInstructorById($instructorId);
+            $profilePhoto = $instructor->profile_photo;
+            $photoUploadedAt = $instructor->photo_uploaded_at;
+
+            // Check if removing photo
+            if (isset($_POST['remove_photo']) && $_POST['remove_photo'] == '1') {
+                if ($profilePhoto) {
+                    $uploadDir = 'uploads/instructors/';
+                    $oldPath = $uploadDir . $profilePhoto;
+                    $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto);
+                    if (file_exists($oldPath)) @unlink($oldPath);
+                    if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
+                    $profilePhoto = null;
+                    $photoUploadedAt = null;
+                }
+            }
+
+            if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo'], $instructor->profile_photo);
+                    $photoUploadedAt = date('Y-m-d H:i:s');
+                } catch (Exception $e) {
+                    flash('dashboard_error', $e->getMessage(), 'alert alert-danger');
+                    redirect('instructor/profile');
+                }
+            }
+
+            if ($this->instructorModel->updateInstructorSelf($instructorId, $contactNo, $email, $profilePhoto, $photoUploadedAt)) {
+                $this->logActivity('UPDATE_SELF_PROFILE', 'INSTRUCTORS', "Instructor self-updated contact info & photo (ID: {$instructorId})");
                 
                 // Update session
                 $_SESSION['instructor_email'] = $email;
                 $_SESSION['instructor_contact'] = $contactNo;
+                $_SESSION['instructor_photo'] = $profilePhoto;
 
-                flash('dashboard_success', 'Contact details updated successfully.', 'alert alert-success');
+                flash('dashboard_success', 'Contact details and profile photo updated successfully.', 'alert alert-success');
             } else {
                 flash('dashboard_error', 'Failed to update contact details.', 'alert alert-danger');
             }
@@ -266,6 +335,17 @@ class InstructorController extends Controller {
                 $errors[] = "Instructor with Service Number '{$serviceNo}' is already registered.";
             }
 
+            $profilePhoto = null;
+            $photoUploaded = false;
+            if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $profilePhoto = $this->handlePhotoUpload($_FILES['profile_photo']);
+                    $photoUploaded = true;
+                } catch (Exception $e) {
+                    $errors[] = $e->getMessage();
+                }
+            }
+
             if ($createLogin) {
                 if (empty($username)) $errors[] = "Username is required for system account.";
                 if (empty($tempPassword)) $errors[] = "Temporary Password is required for system account.";
@@ -278,6 +358,12 @@ class InstructorController extends Controller {
             }
 
             if (!empty($errors)) {
+                // If we uploaded a photo but validation failed, clean it up
+                if ($photoUploaded && $profilePhoto) {
+                    $uploadDir = 'uploads/instructors/';
+                    @unlink($uploadDir . $profilePhoto);
+                    @unlink($uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto));
+                }
                 $data = [
                     'title' => 'Register Instructor',
                     'active_menu' => 'register_instructor',
@@ -296,6 +382,11 @@ class InstructorController extends Controller {
             if ($createLogin) {
                 $userId = $this->userModel->createUser($username, $tempPassword, 2, $accountStatus, $forceChange, 90);
                 if (!$userId) {
+                    if ($profilePhoto) {
+                        $uploadDir = 'uploads/instructors/';
+                        @unlink($uploadDir . $profilePhoto);
+                        @unlink($uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto));
+                    }
                     flash('dashboard_error', 'Failed to create user account. Registration cancelled.', 'alert alert-danger');
                     redirect('instructor/register');
                 }
@@ -310,6 +401,8 @@ class InstructorController extends Controller {
                 'trade' => $trade,
                 'contact_no' => $contactNo,
                 'email' => $email,
+                'profile_photo' => $profilePhoto,
+                'photo_uploaded_at' => $profilePhoto ? date('Y-m-d H:i:s') : null,
                 'status' => 'active'
             ];
 
@@ -321,6 +414,11 @@ class InstructorController extends Controller {
                 // Rollback user account if created
                 if ($userId) {
                     $this->userModel->deleteUser($userId);
+                }
+                if ($profilePhoto) {
+                    $uploadDir = 'uploads/instructors/';
+                    @unlink($uploadDir . $profilePhoto);
+                    @unlink($uploadDir . str_replace('.webp', '_thumb.webp', $profilePhoto));
                 }
                 flash('dashboard_error', 'Failed to register instructor profile.', 'alert alert-danger');
                 redirect('instructor/register');
@@ -442,10 +540,108 @@ class InstructorController extends Controller {
                 'contact_no' => $i->contact_no ?: 'N/A',
                 'email' => $i->email ?: 'N/A',
                 'status' => $i->status,
-                'username' => $i->username ?: 'No Login'
+                'username' => $i->username ?: 'No Login',
+                'profile_photo' => $i->profile_photo ?: ''
             ];
         }
 
         $this->json($response);
+    }
+
+    /**
+     * Securely process, validate, resize and compress profile photos to WebP.
+     */
+    private function handlePhotoUpload($file, $existingPhoto = null) {
+        if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
+            return $existingPhoto;
+        }
+
+        // Limit size to 5 MB
+        if ($file['size'] > 5 * 1024 * 1024) {
+            throw new Exception("Maximum allowed photo size is 5 MB.");
+        }
+
+        // Validate MIME type
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        $fileMime = mime_content_type($file['tmp_name']);
+        if (!in_array($fileMime, $allowedTypes)) {
+            throw new Exception("Supported formats are: JPG, JPEG, PNG, and WEBP.");
+        }
+
+        // Verify it is a valid image
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            throw new Exception("Uploaded file is not a valid image.");
+        }
+
+        // Create resource
+        switch ($fileMime) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $srcImage = @imagecreatefromjpeg($file['tmp_name']);
+                break;
+            case 'image/png':
+                $srcImage = @imagecreatefrompng($file['tmp_name']);
+                break;
+            case 'image/webp':
+                $srcImage = @imagecreatefromwebp($file['tmp_name']);
+                break;
+            default:
+                $srcImage = null;
+        }
+
+        if (!$srcImage) {
+            throw new Exception("Failed to process image file.");
+        }
+
+        // Generate randomized WebP filename
+        $randHex = bin2hex(random_bytes(4));
+        $newFilename = "instructor_" . $randHex . ".webp";
+        $newThumbFilename = "instructor_" . $randHex . "_thumb.webp";
+
+        $uploadDir = 'uploads/instructors/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $destPath = $uploadDir . $newFilename;
+        $thumbPath = $uploadDir . $newThumbFilename;
+
+        // Resize and optimize to WebP
+        $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 400, 400, $destPath);
+        $this->resizeAndSaveImage($srcImage, $imageInfo[0], $imageInfo[1], 100, 100, $thumbPath);
+
+        imagedestroy($srcImage);
+
+        // Delete old photo and thumbnail if they exist
+        if ($existingPhoto) {
+            $oldPath = $uploadDir . $existingPhoto;
+            $oldThumbPath = $uploadDir . str_replace('.webp', '_thumb.webp', $existingPhoto);
+            if (file_exists($oldPath)) @unlink($oldPath);
+            if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
+        }
+
+        return $newFilename;
+    }
+
+    /**
+     * Resizes and crops or fits image, saving as WebP
+     */
+    private function resizeAndSaveImage($srcImage, $srcW, $srcH, $maxW, $maxH, $destPath) {
+        $ratio = min($maxW / $srcW, $maxH / $srcH);
+        $newW = round($srcW * $ratio);
+        $newH = round($srcH * $ratio);
+
+        $destImage = imagecreatetruecolor($newW, $newH);
+
+        imagealphablending($destImage, false);
+        imagesavealpha($destImage, true);
+        $transparent = imagecolorallocatealpha($destImage, 255, 255, 255, 127);
+        imagefilledrectangle($destImage, 0, 0, $newW, $newH, $transparent);
+
+        imagecopyresampled($destImage, $srcImage, 0, 0, 0, 0, $newW, $newH, $srcW, $srcH);
+
+        imagewebp($destImage, $destPath, 80);
+        imagedestroy($destImage);
     }
 }
