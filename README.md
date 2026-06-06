@@ -451,4 +451,4 @@ Use this checklist every time you set up the project on a new machine:
 ---
 
 *SLAF CLMS v1.0 — Sri Lanka Air Force, Trade Training School Ekala*  
-*For technical support, contact the system administrator.*
+*For technical support, contact me.*
