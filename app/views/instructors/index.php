@@ -3,11 +3,11 @@
     <h5 class="fw-bold mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i> Search & Filters</h5>
     <form id="instructor-filter-form" onsubmit="event.preventDefault();" class="row g-3">
         <div class="col-md-3">
-            <label for="search" class="form-label small fw-semibold">Service Number / Name / Username / Email</label>
+            <label for="search" class="form-label small fw-semibold filter-label-align">Service Number / Name / Username / Email</label>
             <input type="text" name="search" id="search" class="form-control form-control-clms" placeholder="e.g. S-12345 or Perera" value="<?php echo e($_GET['search'] ?? ''); ?>">
         </div>
         <div class="col-md-3">
-            <label for="rank" class="form-label small fw-semibold">Rank</label>
+            <label for="rank" class="form-label small fw-semibold filter-label-align">Rank</label>
             <select name="rank" id="rank" class="form-select form-control-clms">
                 <option value="">-- All Ranks --</option>
                 <?php foreach($data['ranks'] as $r): ?>
@@ -16,11 +16,11 @@
             </select>
         </div>
         <div class="col-md-3">
-            <label for="trade" class="form-label small fw-semibold">Trade</label>
+            <label for="trade" class="form-label small fw-semibold filter-label-align">Trade</label>
             <input type="text" name="trade" id="trade" class="form-control form-control-clms" placeholder="e.g. IT Specialist" value="<?php echo e($_GET['trade'] ?? ''); ?>">
         </div>
         <div class="col-md-3">
-            <label for="status_filter" class="form-label small fw-semibold">Status</label>
+            <label for="status_filter" class="form-label small fw-semibold filter-label-align">Status</label>
             <select name="status" id="status_filter" class="form-select form-control-clms">
                 <option value="active" <?php echo (!isset($_GET['status']) || $_GET['status'] === 'active') ? 'selected' : ''; ?>>Active Only</option>
                 <option value="inactive" <?php echo (isset($_GET['status']) && $_GET['status'] === 'inactive') ? 'selected' : ''; ?>>Inactive Only</option>

@@ -18,7 +18,7 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <!-- Custom Style Sheet -->
-    <link rel="stylesheet" href="<?php echo URLROOT; ?>css/style.css">
+    <link rel="stylesheet" href="<?php echo URLROOT; ?>css/style.css?v=<?php echo time(); ?>">
     
     <!-- Render Theme Config Inline to Prevent FOUC -->
     <script>

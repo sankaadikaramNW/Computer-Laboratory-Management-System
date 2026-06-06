@@ -416,3 +416,11 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);font-weight:700;color:var(--te
     .card-clms{box-shadow:none!important;border:1px solid #ccc!important;}
     body{background:#fff!important;color:#000!important;}
 }
+
+/* Align search/filter labels of varying heights */
+@media (min-width: 768px) {
+    .filter-label-align {
+        min-height: 56px;
+        display: block;
+    }
+}
