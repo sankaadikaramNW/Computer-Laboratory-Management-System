@@ -319,6 +319,7 @@
                         <?php else: ?>
                             <p class="text-center py-4" style="color:var(--text-muted);font-size:0.88rem;">No fault tickets submitted.</p>
                         <?php endif; ?>
+                    </div>
                 </div>
 
                 <!-- Completed Sessions -->

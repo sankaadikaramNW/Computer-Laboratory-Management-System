@@ -9,13 +9,9 @@
     <meta name="csrf-token" content="<?php echo generateCsrfToken(); ?>">
     
     <!-- Bootstrap 5 CSS CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/css/bootstrap.min.css" rel="stylesheet" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css';">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    
-    <!-- FullCalendar CSS CDN (required for calendar view) -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="<?php echo URLROOT; ?>css/style.css?v=<?php echo time(); ?>">
@@ -292,26 +288,28 @@
                                 <a href="<?php echo URLROOT; ?>dashboard/clearNotifications" class="text-white small text-decoration-underline" style="font-size: 0.75rem;">Mark all read</a>
                             <?php endif; ?>
                         </li>
-                        <div style="max-height: 250px; overflow-y: auto;">
-                            <?php 
-                            $notifications = $notifModel->getNotificationsByUser($_SESSION['user_id'], 5);
-                            if (!empty($notifications)):
-                                foreach ($notifications as $n):
-                            ?>
-                                <li class="p-3 border-bottom" style="font-size:0.85rem;background:<?php echo $n->is_read ? 'var(--bg-card)' : 'var(--primary-light)'; ?>;border-color:var(--border)!important;">
-                                    <span class="text-secondary small d-block mb-1"><i class="bi bi-clock me-1"></i><?php echo date('d M Y H:i', strtotime($n->created_at)); ?></span>
-                                    <p class="mb-0 text-wrap text-break" style="color:var(--text-body);"><?php echo e($n->message); ?></p>
-                                </li>
-                            <?php 
-                                endforeach;
-                            else:
-                            ?>
-                                <li class="p-4 text-center text-muted">
-                                    <i class="bi bi-bell-slash fs-4 d-block mb-2 text-secondary"></i>
-                                    <span class="small">No notifications found</span>
-                                </li>
-                            <?php endif; ?>
-                        </div>
+                        <li style="max-height: 250px; overflow-y: auto; display: block;">
+                            <ul class="list-unstyled p-0 m-0">
+                                <?php 
+                                $notifications = $notifModel->getNotificationsByUser($_SESSION['user_id'], 5);
+                                if (!empty($notifications)):
+                                    foreach ($notifications as $n):
+                                ?>
+                                    <li class="p-3 border-bottom" style="font-size:0.85rem;background:<?php echo $n->is_read ? 'var(--bg-card)' : 'var(--primary-light)'; ?>;border-color:var(--border)!important;">
+                                        <span class="text-secondary small d-block mb-1"><i class="bi bi-clock me-1"></i><?php echo date('d M Y H:i', strtotime($n->created_at)); ?></span>
+                                        <p class="mb-0 text-wrap text-break" style="color:var(--text-body);"><?php echo e($n->message); ?></p>
+                                    </li>
+                                <?php 
+                                    endforeach;
+                                else:
+                                ?>
+                                    <li class="p-4 text-center text-muted">
+                                        <i class="bi bi-bell-slash fs-4 d-block mb-2 text-secondary"></i>
+                                        <span class="small">No notifications found</span>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
 
