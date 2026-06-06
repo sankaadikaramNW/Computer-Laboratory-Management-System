@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS users (
     last_login DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_password_change DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    failed_attempts INT DEFAULT 0,
+    force_password_change TINYINT(1) DEFAULT 0,
+    password_expiry_days INT DEFAULT 90,
     FOREIGN KEY (role_id) REFERENCES roles(id)
 ) ENGINE=InnoDB;
 
@@ -236,4 +240,13 @@ CREATE TABLE IF NOT EXISTS system_settings (
     setting_value TEXT NULL,
     description TEXT,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 19. Password History Table
+CREATE TABLE IF NOT EXISTS password_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

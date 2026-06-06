@@ -189,6 +189,11 @@
                         <i class="bi bi-journal-text"></i> System Audit Logs
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'system_health') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>system/health" class="sidebar-link">
+                        <i class="bi bi-heart-pulse-fill"></i> System Health Check
+                    </a>
+                </li>
 
             <?php elseif (isInstructor()): ?>
                 <!-- Instructor Sidebar Options -->
