@@ -90,7 +90,7 @@ Computer Laboratory Management System/
 
 1. Copy the entire project folder:
    ```
-   Computer Laboratory Management System
+   Computer-Laboratory-Management-System
    ```
 2. Paste it into XAMPP's web root directory:
    ```
@@ -98,7 +98,7 @@ Computer Laboratory Management System/
    ```
    So the final path becomes:
    ```
-   C:\xampp\htdocs\Computer Laboratory Management System\
+   C:\xampp\htdocs\Computer-Laboratory-Management-System\
    ```
 
 > ⚠️ **Tip:** If your folder name has spaces, you can rename it to something simpler like `clms` for easier URL access:
@@ -183,7 +183,7 @@ This creates all the tables in the database.
 **Option B — Using Command Line:**
 
 ```bash
-mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer Laboratory Management System\database\schema.sql"
+mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\schema.sql"
 ```
 
 ---
@@ -208,7 +208,7 @@ This inserts the default admin account, roles, sample labs, and sample instructo
 **Option B — Using Command Line:**
 
 ```bash
-mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer Laboratory Management System\database\seed.sql"
+mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\seed.sql"
 ```
 
 ---
@@ -290,7 +290,7 @@ By default, the controller enforces a maximum image file upload size of **5 MB**
 
 1. Open your browser and navigate to:
    ```
-   http://localhost/Computer Laboratory Management System/
+   http://localhost/Computer-Laboratory-Management-System/
    ```
    Or if you renamed the folder:
    ```
