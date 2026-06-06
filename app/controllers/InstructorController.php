@@ -19,16 +19,13 @@ class InstructorController extends Controller {
     public function index() {
         requireAdmin();
 
-        $searchTerm = filter_input(INPUT_GET, 'search', FILTER_DEFAULT);
-        $rankFilter = filter_input(INPUT_GET, 'rank', FILTER_DEFAULT);
-        $tradeFilter = filter_input(INPUT_GET, 'trade', FILTER_DEFAULT);
+        $searchTerm = filter_input(INPUT_GET, 'search', FILTER_DEFAULT) ?? '';
+        $rankFilter = filter_input(INPUT_GET, 'rank', FILTER_DEFAULT) ?? '';
+        $tradeFilter = filter_input(INPUT_GET, 'trade', FILTER_DEFAULT) ?? '';
+        $statusFilter = filter_input(INPUT_GET, 'status', FILTER_DEFAULT) ?? 'active';
 
         // Fetch instructors based on filter
-        if ($searchTerm || $rankFilter || $tradeFilter) {
-            $instructors = $this->instructorModel->searchInstructors($searchTerm, $rankFilter, $tradeFilter);
-        } else {
-            $instructors = $this->instructorModel->getAllInstructors();
-        }
+        $instructors = $this->instructorModel->searchInstructors($searchTerm, $rankFilter, $tradeFilter, $statusFilter);
 
         // Fetch unlinked users to link them as logins (role_id = 2 and not in instructors table)
         // Or we can retrieve all users list to assign. Let's fetch all users so admin can link.
@@ -208,11 +205,38 @@ class InstructorController extends Controller {
 
         $instructor = $this->instructorModel->getInstructorById($id);
         if ($instructor) {
-            if ($this->instructorModel->deleteInstructor($id)) {
-                $this->logActivity('DELETE_INSTRUCTOR', 'INSTRUCTORS', "Deleted instructor record {$instructor->rank} {$instructor->full_name}");
-                flash('dashboard_success', 'Instructor profile deleted successfully.', 'alert alert-success');
+            $userId = $instructor->user_id;
+            
+            // Check if related records exist
+            if ($this->instructorModel->hasRelatedRecords($id, $userId)) {
+                // Related records exist, archive instead of deleting
+                if ($this->instructorModel->archiveInstructor($id, $userId)) {
+                    $this->logActivity('ARCHIVE_INSTRUCTOR', 'INSTRUCTORS', "Archived instructor record {$instructor->rank} {$instructor->full_name} due to existing historical records.");
+                    flash('dashboard_success', 'Instructor cannot be deleted due to existing historical records. The instructor has been archived instead.', 'alert alert-info');
+                } else {
+                    flash('dashboard_error', 'Failed to archive instructor.', 'alert alert-danger');
+                }
             } else {
-                flash('dashboard_error', 'Failed to delete instructor profile.', 'alert alert-danger');
+                // No related records, hard delete is safe
+                if ($this->instructorModel->deleteInstructor($id)) {
+                    if ($userId) {
+                        $this->userModel->deleteUser($userId);
+                    }
+                    
+                    // Delete profile photo and thumbnail files
+                    if ($instructor->profile_photo) {
+                        $uploadDir = 'uploads/instructors/';
+                        $oldPath = $uploadDir . $instructor->profile_photo;
+                        $oldThumbPath = $uploadDir . preg_replace('/(\.[a-zA-Z0-9]+)$/', '_thumb$1', $instructor->profile_photo);
+                        if (file_exists($oldPath)) @unlink($oldPath);
+                        if (file_exists($oldThumbPath)) @unlink($oldThumbPath);
+                    }
+                    
+                    $this->logActivity('DELETE_INSTRUCTOR', 'INSTRUCTORS', "Deleted instructor record {$instructor->rank} {$instructor->full_name}");
+                    flash('dashboard_success', 'Instructor profile deleted successfully.', 'alert alert-success');
+                } else {
+                    flash('dashboard_error', 'Failed to delete instructor profile.', 'alert alert-danger');
+                }
             }
         } else {
             flash('dashboard_error', 'Instructor not found.', 'alert alert-danger');
@@ -526,8 +550,9 @@ class InstructorController extends Controller {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $rank = isset($_GET['rank']) ? trim($_GET['rank']) : '';
         $trade = isset($_GET['trade']) ? trim($_GET['trade']) : '';
+        $status = isset($_GET['status']) ? trim($_GET['status']) : 'active';
 
-        $instructors = $this->instructorModel->searchInstructors($search, $rank, $trade);
+        $instructors = $this->instructorModel->searchInstructors($search, $rank, $trade, $status);
         
         $response = [];
         foreach ($instructors as $i) {

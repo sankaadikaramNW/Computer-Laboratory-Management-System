@@ -28,11 +28,15 @@ class InstructorModel extends Model {
     /**
      * Get all instructors
      */
-    public function getAllInstructors() {
-        $this->db->query("SELECT i.*, u.username 
-                          FROM instructors i 
-                          LEFT JOIN users u ON i.user_id = u.id 
-                          ORDER BY i.rank, i.full_name ASC");
+    public function getAllInstructors($includeArchived = false) {
+        $sql = "SELECT i.*, u.username 
+                FROM instructors i 
+                LEFT JOIN users u ON i.user_id = u.id";
+        if (!$includeArchived) {
+            $sql .= " WHERE i.status != 'archived'";
+        }
+        $sql .= " ORDER BY i.rank, i.full_name ASC";
+        $this->db->query($sql);
         return $this->db->resultSet();
     }
 
@@ -98,7 +102,19 @@ class InstructorModel extends Model {
         $this->db->bind(':status', $data['status']);
         $this->db->bind(':id', $id);
         
-        return $this->db->execute();
+        $result = $this->db->execute();
+        
+        if ($result && $data['user_id']) {
+            if ($data['status'] === 'archived' || $data['status'] === 'inactive') {
+                $this->db->query("UPDATE users SET status = 'inactive' WHERE id = :user_id");
+            } else {
+                $this->db->query("UPDATE users SET status = 'active' WHERE id = :user_id AND status = 'inactive'");
+            }
+            $this->db->bind(':user_id', $data['user_id']);
+            $this->db->execute();
+        }
+        
+        return $result;
     }
 
     /**
@@ -121,7 +137,7 @@ class InstructorModel extends Model {
     /**
      * Search and Filter Instructors
      */
-    public function searchInstructors($term = '', $rank = '', $trade = '') {
+    public function searchInstructors($term = '', $rank = '', $trade = '', $status = 'active') {
         $sql = "SELECT i.*, u.username FROM instructors i LEFT JOIN users u ON i.user_id = u.id WHERE 1=1";
         
         if (!empty($term)) {
@@ -137,6 +153,14 @@ class InstructorModel extends Model {
         }
         if (!empty($trade)) {
             $sql .= " AND i.trade LIKE :trade";
+        }
+        
+        if ($status === 'active') {
+            $sql .= " AND i.status = 'active'";
+        } elseif ($status === 'inactive') {
+            $sql .= " AND i.status = 'inactive'";
+        } elseif ($status === 'archived') {
+            $sql .= " AND i.status = 'archived'";
         }
         
         $sql .= " ORDER BY i.rank, i.full_name ASC";
@@ -187,6 +211,50 @@ class InstructorModel extends Model {
         $this->db->bind(':id', $excludeId);
         $this->db->execute();
         return $this->db->rowCount() > 0;
+    }
+
+    /**
+     * Check if an instructor has related historical records
+     */
+    public function hasRelatedRecords($instructorId, $userId = null) {
+        // Check allocations
+        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE instructor_id = :instructor_id");
+        $this->db->bind(':instructor_id', $instructorId);
+        $allocCount = (int)$this->db->single()->count;
+        if ($allocCount > 0) return true;
+
+        if ($userId) {
+            // Check allocation requests (change requests)
+            $this->db->query("SELECT COUNT(*) as count FROM allocation_requests WHERE requester_id = :user_id");
+            $this->db->bind(':user_id', $userId);
+            $reqCount = (int)$this->db->single()->count;
+            if ($reqCount > 0) return true;
+
+            // Check fault reports
+            $this->db->query("SELECT COUNT(*) as count FROM fault_reports WHERE reported_by = :user_id");
+            $this->db->bind(':user_id', $userId);
+            $faultCount = (int)$this->db->single()->count;
+            if ($faultCount > 0) return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Archive an instructor record
+     */
+    public function archiveInstructor($id, $userId = null) {
+        $this->db->query("UPDATE instructors SET status = 'archived' WHERE id = :id");
+        $this->db->bind(':id', $id);
+        $result = $this->db->execute();
+        
+        if ($result && $userId) {
+            $this->db->query("UPDATE users SET status = 'inactive' WHERE id = :user_id");
+            $this->db->bind(':user_id', $userId);
+            $this->db->execute();
+        }
+        
+        return $result;
     }
 
     /**

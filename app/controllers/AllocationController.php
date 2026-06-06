@@ -24,7 +24,7 @@ class AllocationController extends Controller {
         requireAdmin();
 
         $allocations = $this->allocModel->getAllAllocations();
-        $instructors = $this->instructorModel->getActiveInstructors();
+        $instructors = $this->instructorModel->getAllInstructors(true);
         $labs = $this->labModel->getActiveLabs();
         $lessons = $this->lessonModel->getAllLessons();
 
@@ -47,7 +47,7 @@ class AllocationController extends Controller {
      */
     public function calendar() {
         // Accessible by both admin and instructors
-        $instructors = $this->instructorModel->getActiveInstructors();
+        $instructors = $this->instructorModel->getAllInstructors(true);
         $labs = $this->labModel->getActiveLabs();
         $lessons = $this->lessonModel->getAllLessons();
 

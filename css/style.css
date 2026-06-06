@@ -232,6 +232,7 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);font-weight:700;color:var(--te
 /* ── STATUS BADGES ── */
 .badge-active{background:#D1FAE5;color:#065F46;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}
 .badge-inactive,.badge-removed{background:#F3F4F6;color:#6B7280;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}
+.badge-archived{background:#FEF3C7;color:#D97706;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}
 .badge-faulty{background:#FEE2E2;color:#991B1B;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}
 .badge-maintenance{background:#FEF3C7;color:#92400E;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}
 .badge-pending{background:#FEF3C7;color:#92400E;font-weight:600;border-radius:99px;padding:3px 10px;font-size:0.75rem;}

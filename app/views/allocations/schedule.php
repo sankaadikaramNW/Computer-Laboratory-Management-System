@@ -108,9 +108,17 @@
                         <select name="instructor_id" id="add_instructor_id" class="form-select form-control-clms" required>
                             <option value="">-- Choose Instructor --</option>
                             <?php foreach($data['instructors'] as $i): ?>
-                                <option value="<?php echo $i->id; ?>"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?> (<?php echo e($i->trade); ?>)</option>
+                                <?php if($i->status === 'active'): ?>
+                                    <option value="<?php echo $i->id; ?>"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?> (<?php echo e($i->trade); ?>)</option>
+                                <?php else: ?>
+                                    <option value="<?php echo $i->id; ?>" class="inactive-archived-option d-none" disabled style="display: none;"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?> (<?php echo e($i->trade); ?>) - [<?php echo ucfirst($i->status); ?>]</option>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </select>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input toggle-inactive-instructors" type="checkbox" id="add_toggle_inactive">
+                            <label class="form-check-label small text-muted" for="add_toggle_inactive">Include Inactive/Archived Instructors</label>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -177,9 +185,17 @@
                         <label for="edit_instructor_id" class="form-label small fw-semibold">Assigned Instructor</label>
                         <select name="instructor_id" id="edit_instructor_id" class="form-select form-control-clms" required>
                             <?php foreach($data['instructors'] as $i): ?>
-                                <option value="<?php echo $i->id; ?>"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?></option>
+                                <?php if($i->status === 'active'): ?>
+                                    <option value="<?php echo $i->id; ?>"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?></option>
+                                <?php else: ?>
+                                    <option value="<?php echo $i->id; ?>" class="inactive-archived-option d-none" disabled style="display: none;"><?php echo e($i->rank); ?> <?php echo e($i->full_name); ?> - [<?php echo ucfirst($i->status); ?>]</option>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </select>
+                        <div class="form-check form-switch mt-1">
+                            <input class="form-check-input toggle-inactive-instructors" type="checkbox" id="edit_toggle_inactive">
+                            <label class="form-check-label small text-muted" for="edit_toggle_inactive">Include Inactive/Archived Instructors</label>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -214,6 +230,29 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Toggle inactive/archived options logic
+    document.querySelectorAll('.toggle-inactive-instructors').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const modal = this.closest('.modal');
+            const options = modal.querySelectorAll('.inactive-archived-option');
+            options.forEach(opt => {
+                if (this.checked) {
+                    opt.classList.remove('d-none');
+                    opt.style.display = '';
+                    opt.disabled = false;
+                } else {
+                    opt.classList.add('d-none');
+                    opt.style.display = 'none';
+                    // If currently selected, reset select value
+                    if (opt.selected) {
+                        modal.querySelector('select[name="instructor_id"]').value = "";
+                    }
+                    opt.disabled = true;
+                }
+            });
+        });
+    });
+
     const editBtns = document.querySelectorAll('.edit-btn');
     const editForm = document.getElementById('editForm');
     
@@ -224,7 +263,29 @@ document.addEventListener('DOMContentLoaded', function() {
             
             document.getElementById('edit_lab_id').value = this.getAttribute('data-labid');
             document.getElementById('edit_lesson_id').value = this.getAttribute('data-lessonid');
-            document.getElementById('edit_instructor_id').value = this.getAttribute('data-instructorid');
+            
+            const instructorId = this.getAttribute('data-instructorid');
+            const select = document.getElementById('edit_instructor_id');
+            
+            // Check if selected option is inactive/archived
+            let isInactiveOrArchived = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value == instructorId && select.options[i].classList.contains('inactive-archived-option')) {
+                    isInactiveOrArchived = true;
+                    break;
+                }
+            }
+            
+            const toggle = document.getElementById('edit_toggle_inactive');
+            if (isInactiveOrArchived) {
+                toggle.checked = true;
+                toggle.dispatchEvent(new Event('change'));
+            } else {
+                toggle.checked = false;
+                toggle.dispatchEvent(new Event('change'));
+            }
+            
+            select.value = instructorId;
             document.getElementById('edit_date').value = this.getAttribute('data-date');
             
             // Format time strings (remove seconds if present)

@@ -2,11 +2,11 @@
 <div class="card-clms mb-4 no-print">
     <h5 class="fw-bold mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i> Search & Filters</h5>
     <form id="instructor-filter-form" onsubmit="event.preventDefault();" class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="search" class="form-label small fw-semibold">Service Number / Name / Username / Email</label>
             <input type="text" name="search" id="search" class="form-control form-control-clms" placeholder="e.g. S-12345 or Perera" value="<?php echo e($_GET['search'] ?? ''); ?>">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="rank" class="form-label small fw-semibold">Rank</label>
             <select name="rank" id="rank" class="form-select form-control-clms">
                 <option value="">-- All Ranks --</option>
@@ -15,9 +15,18 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="trade" class="form-label small fw-semibold">Trade</label>
             <input type="text" name="trade" id="trade" class="form-control form-control-clms" placeholder="e.g. IT Specialist" value="<?php echo e($_GET['trade'] ?? ''); ?>">
+        </div>
+        <div class="col-md-3">
+            <label for="status_filter" class="form-label small fw-semibold">Status</label>
+            <select name="status" id="status_filter" class="form-select form-control-clms">
+                <option value="active" <?php echo (!isset($_GET['status']) || $_GET['status'] === 'active') ? 'selected' : ''; ?>>Active Only</option>
+                <option value="inactive" <?php echo (isset($_GET['status']) && $_GET['status'] === 'inactive') ? 'selected' : ''; ?>>Inactive Only</option>
+                <option value="archived" <?php echo (isset($_GET['status']) && $_GET['status'] === 'archived') ? 'selected' : ''; ?>>Archived Only</option>
+                <option value="all" <?php echo (isset($_GET['status']) && $_GET['status'] === 'all') ? 'selected' : ''; ?>>All Instructors</option>
+            </select>
         </div>
     </form>
 </div>
@@ -79,8 +88,10 @@
                             <td>
                                 <?php if($i->status === 'active'): ?>
                                     <span class="badge badge-active">Active</span>
-                                <?php else: ?>
+                                <?php elseif($i->status === 'inactive'): ?>
                                     <span class="badge badge-inactive">Inactive</span>
+                                <?php elseif($i->status === 'archived'): ?>
+                                    <span class="badge badge-archived">Archived</span>
                                 <?php endif; ?>
                             </td>
                             <td class="no-print">
@@ -115,8 +126,8 @@
                                     <!-- Secure Delete Form -->
                                     <form action="<?php echo URLROOT; ?>instructor/delete/<?php echo $i->id; ?>" method="POST" class="d-inline delete-form">
                                         <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Instructor">
-                                            <i class="bi bi-trash-fill"></i>
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Archive/Delete Instructor">
+                                            <i class="bi bi-archive-fill"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -240,6 +251,7 @@
                         <select name="status" id="edit_status" class="form-select form-control-clms">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
+                            <option value="archived">Archived</option>
                         </select>
                     </div>
                 </div>
@@ -323,10 +335,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const URLROOT = '<?php echo URLROOT; ?>';
     const CSRF = '<?php echo generateCsrfToken(); ?>';
 
-    // ── Delete confirmation ────────────────────────────────────────
+    // ── Delete/Archive confirmation ────────────────────────────────
     document.addEventListener('submit', function(e) {
         if (e.target.classList.contains('delete-form')) {
-            if (!confirm('Are you sure you want to delete this instructor profile? This action cannot be undone.')) {
+            if (!confirm('Are you sure you want to archive/delete this instructor? If they have historical allocations, they will be archived instead of permanently deleted.')) {
                 e.preventDefault();
             }
         }
@@ -407,20 +419,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ── AJAX Search ────────────────────────────────────────────────
+    const statusSelect = document.getElementById('status_filter');
+
     function performSearch() {
         const search = encodeURIComponent(searchInput.value);
         const rank   = encodeURIComponent(rankSelect.value);
         const trade  = encodeURIComponent(tradeInput.value);
+        const status = encodeURIComponent(statusSelect.value);
 
-        fetch(`${URLROOT}instructor/searchAjax?search=${search}&rank=${rank}&trade=${trade}`)
+        fetch(`${URLROOT}instructor/searchAjax?search=${search}&rank=${rank}&trade=${trade}&status=${status}`)
             .then(res => res.json())
             .then(data => {
                 if (data.length > 0) {
                     let html = '';
                     data.forEach(i => {
-                        const statusBadge = i.status === 'active'
-                            ? '<span class="badge badge-active">Active</span>'
-                            : '<span class="badge badge-inactive">Inactive</span>';
+                        let statusBadge = '';
+                        if (i.status === 'active') {
+                            statusBadge = '<span class="badge badge-active">Active</span>';
+                        } else if (i.status === 'inactive') {
+                            statusBadge = '<span class="badge badge-inactive">Inactive</span>';
+                        } else if (i.status === 'archived') {
+                            statusBadge = '<span class="badge badge-archived">Archived</span>';
+                        }
 
                         const linkedLogin = i.username !== 'No Login'
                             ? `<span class="small fw-semibold text-success"><i class="bi bi-check-circle-fill me-1"></i>${escapeHtml(i.username)}</span>`
@@ -476,8 +496,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${addLoginBtn}
                                         <form action="${URLROOT}instructor/delete/${i.id}" method="POST" class="d-inline delete-form">
                                             <input type="hidden" name="csrf_token" value="${CSRF}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Instructor">
-                                                <i class="bi bi-trash-fill"></i>
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Archive Instructor">
+                                                <i class="bi bi-archive-fill"></i>
                                             </button>
                                         </form>
                                     </div>
@@ -504,6 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('input', performSearch);
     rankSelect.addEventListener('change', performSearch);
     tradeInput.addEventListener('input', performSearch);
+    statusSelect.addEventListener('change', performSearch);
 
     bindEditButtons();
     bindAddLoginButtons();

@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS instructors (
     email VARCHAR(100),
     profile_photo VARCHAR(255) NULL,
     photo_uploaded_at TIMESTAMP NULL,
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'inactive', 'archived') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
