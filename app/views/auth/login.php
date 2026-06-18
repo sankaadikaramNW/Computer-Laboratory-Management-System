@@ -15,31 +15,30 @@
 <body class="login-page">
 
 <div class="login-container">
-    <div class="login-box">
 
     <!-- LEFT PANEL — Branding -->
     <div class="login-left">
         <!-- SLAF Crest -->
         <img src="<?php echo URLROOT; ?>images/Picture1.png"
              alt="SLAF Crest"
-             style="width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.35));margin-bottom:1.5rem;"
+             style="width:180px;height:180px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(0,0,0,0.35));margin-bottom:1.5rem;"
              onerror="this.style.display='none';document.getElementById('crest-fallback').style.display='block';"
         >
-        <i id="crest-fallback" class="bi bi-shield-fill-check" style="display:none;font-size:4rem;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;"></i>
+        <i id="crest-fallback" class="bi bi-shield-fill-check" style="display:none;font-size:6.5rem;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;"></i>
         <h1>SLAF Trade Training School</h1>
         <p class="mt-2">Computer Laboratory Management System — Ekala</p>
-        <div class="mt-4 d-flex flex-column gap-3" style="max-width:300px;text-align:left;">
+        <div class="mt-4 d-flex flex-column gap-3" style="max-width:360px;text-align:left;">
             <div class="d-flex align-items-start gap-3">
-                <i class="bi bi-calendar-check-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
-                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Schedule &amp; manage laboratory allocations</span>
+                <i class="bi bi-calendar-check-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.3rem;"></i>
+                <span style="color:rgba(255,255,255,0.8);font-size:1.05rem;">Schedule &amp; manage laboratory allocations</span>
             </div>
             <div class="d-flex align-items-start gap-3">
-                <i class="bi bi-pc-display-horizontal mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
-                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Track equipment, faults &amp; maintenance</span>
+                <i class="bi bi-pc-display-horizontal mt-1" style="color:rgba(255,255,255,0.75);font-size:1.3rem;"></i>
+                <span style="color:rgba(255,255,255,0.8);font-size:1.05rem;">Track equipment, faults &amp; maintenance</span>
             </div>
             <div class="d-flex align-items-start gap-3">
-                <i class="bi bi-people-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.1rem;"></i>
-                <span style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Manage instructors and syllabus lessons</span>
+                <i class="bi bi-people-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.3rem;"></i>
+                <span style="color:rgba(255,255,255,0.8);font-size:1.05rem;">Manage instructors and syllabus lessons</span>
             </div>
         </div>
     </div>
@@ -104,7 +103,6 @@
                 </div>
             </form>
         </div>
-    </div>
     </div>
 </div>
 
