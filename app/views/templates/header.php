@@ -168,6 +168,11 @@
                         <i class="bi bi-key-fill"></i> Change My Password
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_login_activity') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myLoginActivity" class="sidebar-link">
+                        <i class="bi bi-clock-history"></i> My Login Activity
+                    </a>
+                </li>
 
                 <li class="sidebar-menu-header">System Administration</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'notices') ? 'active' : ''; ?>">
@@ -231,6 +236,11 @@
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_password') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>auth/myPassword" class="sidebar-link">
                         <i class="bi bi-key-fill"></i> Change My Password
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_login_activity') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myLoginActivity" class="sidebar-link">
+                        <i class="bi bi-clock-history"></i> My Login Activity
                     </a>
                 </li>
             <?php endif; ?>
@@ -342,6 +352,7 @@
                             <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>instructor/profile"><i class="bi bi-person-gear me-2 text-secondary"></i> Edit Contact Info</a></li>
                         <?php endif; ?>
                         <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>auth/myPassword"><i class="bi bi-key-fill me-2 text-secondary"></i> Change My Password</a></li>
+                        <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>auth/myLoginActivity"><i class="bi bi-clock-history me-2 text-secondary"></i> My Login Activity</a></li>
                         <li><hr class="dropdown-divider border-color"></li>
                         <li><a class="dropdown-item small text-danger" href="<?php echo URLROOT; ?>auth/logout"><i class="bi bi-box-arrow-right me-2 text-danger"></i> Logout</a></li>
                     </ul>

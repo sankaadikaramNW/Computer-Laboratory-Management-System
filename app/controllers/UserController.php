@@ -274,4 +274,25 @@ class UserController extends Controller {
             'history' => $history
         ]);
     }
+
+    /**
+     * Print-friendly login activity report for admin viewing a specific user
+     */
+    public function loginHistoryReport($id) {
+        $user = $this->userModel->getUserById($id);
+        if (!$user) {
+            die('User not found');
+        }
+
+        $logs = $this->auditModel->getUserLoginLogs($id, $user->username, 100);
+
+        $data = [
+            'title' => 'User Login Activity Audit Report',
+            'logs' => $logs,
+            'target_user' => $user->username,
+            'target_role' => $user->role_name
+        ];
+
+        $this->view('reports/login_activity_report', $data);
+    }
 }

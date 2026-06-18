@@ -326,7 +326,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="export-history-pdf-btn" href="#" target="_blank" class="btn btn-primary btn-sm">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Export PDF Report
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -386,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.history-user-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            document.getElementById('export-history-pdf-btn').href = '<?php echo URLROOT; ?>user/loginHistoryReport/' + id;
             const tbody = document.getElementById('history-table-body');
             
             tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>Loading logs...</td></tr>`;
@@ -608,6 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.history-user-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
+                document.getElementById('export-history-pdf-btn').href = '<?php echo URLROOT; ?>user/loginHistoryReport/' + id;
                 const tbodyHistory = document.getElementById('history-table-body');
                 
                 tbodyHistory.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>Loading logs...</td></tr>`;
