@@ -141,7 +141,7 @@ The system uses clean URLs (e.g., `/instructor/register`). Apache's `mod_rewrite
 2. Click **"New"** in the left sidebar
 3. In the **Database name** field, type:
    ```
-   slaf_clms
+   itwekala_slaf_clms
    ```
 4. Set the collation to:
    ```
@@ -159,7 +159,7 @@ The system uses clean URLs (e.g., `/instructor/register`). Apache's `mod_rewrite
    *(Press Enter when it asks for password — default XAMPP has no password)*
 3. Run:
    ```sql
-   CREATE DATABASE slaf_clms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE itwekala_slaf_clms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 4. Type `exit` to quit
 
@@ -172,7 +172,7 @@ This creates all the tables in the database.
 **Option A — Using phpMyAdmin:**
 
 1. Go to `http://localhost/phpmyadmin`
-2. Click on **`slaf_clms`** in the left sidebar
+2. Click on **`itwekala_slaf_clms`** in the left sidebar
 3. Click the **Import** tab at the top
 4. Click **"Choose File"** and select:
    ```
@@ -183,7 +183,7 @@ This creates all the tables in the database.
 **Option B — Using Command Line:**
 
 ```bash
-mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\schema.sql"
+mysql -u root -p itwekala_slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\schema.sql"
 ```
 
 ---
@@ -197,7 +197,7 @@ This inserts the default admin account, roles, sample labs, and sample instructo
 **Option A — Using phpMyAdmin:**
 
 1. Go to `http://localhost/phpmyadmin`
-2. Click on **`slaf_clms`** in the left sidebar
+2. Click on **`itwekala_slaf_clms`** in the left sidebar
 3. Click the **Import** tab
 4. Click **"Choose File"** and select:
    ```
@@ -208,7 +208,7 @@ This inserts the default admin account, roles, sample labs, and sample instructo
 **Option B — Using Command Line:**
 
 ```bash
-mysql -u root -p slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\seed.sql"
+mysql -u root -p itwekala_slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\seed.sql"
 ```
 
 ---
@@ -227,7 +227,7 @@ Find and update these lines to match your MySQL settings:
 define('DB_HOST', 'localhost');   // Usually 'localhost' — don't change unless needed
 define('DB_USER', 'root');        // Your MySQL username (default: root)
 define('DB_PASS', '');            // Your MySQL password (default: empty for XAMPP)
-define('DB_NAME', 'slaf_clms');   // The database name you created in Step 4
+define('DB_NAME', 'itwekala_slaf_clms');   // The database name you created in Step 4
 ```
 
 **Common scenarios:**
@@ -325,7 +325,7 @@ By default, the controller enforces a maximum image file upload size of **5 MB**
 
 ## 5. Database Tables Overview
 
-The `slaf_clms` database contains **18 tables**:
+The `itwekala_slaf_clms` database contains **18 tables**:
 
 | # | Table | Purpose |
 |---|---|---|
@@ -386,7 +386,7 @@ The `slaf_clms` database contains **18 tables**:
 ### ❌ Login says "Invalid credentials" with correct password
 
 **Cause:** `seed.sql` was not imported or was imported to the wrong database  
-**Fix:** Make sure you clicked on `slaf_clms` in phpMyAdmin before importing `seed.sql`. Repeat [Step 6](#step-6--import-the-seed-data).
+**Fix:** Make sure you clicked on `itwekala_slaf_clms` in phpMyAdmin before importing `seed.sql`. Repeat [Step 6](#step-6--import-the-seed-data).
 
 ---
 
@@ -427,7 +427,7 @@ Use this checklist every time you set up the project on a new machine:
 [ ] 2. Project folder copied to C:\xampp\htdocs\
 [ ] 3. mod_rewrite enabled and AllowOverride All set in httpd.conf
 [ ] 4. PHP GD extension enabled in php.ini (and Apache restarted)
-[ ] 5. Database 'slaf_clms' created in phpMyAdmin
+[ ] 5. Database 'itwekala_slaf_clms' created in phpMyAdmin
 [ ] 6. database/schema.sql imported successfully
 [ ] 7. database/seed.sql imported successfully
 [ ] 8. app/config/config.php updated with correct DB credentials

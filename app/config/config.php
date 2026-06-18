@@ -3,7 +3,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'slaf_clms');
+define('DB_NAME', 'itwekala_slaf_clms');
 
 // App Root — points to the app/ directory
 // When at htdocs/app/config/config.php:
