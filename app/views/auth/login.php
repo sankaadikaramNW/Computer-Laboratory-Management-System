@@ -6,15 +6,16 @@
     <title>Login - SLAF CLMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="<?php echo URLROOT; ?>css/style.css">
+    <link rel="stylesheet" href="<?php echo URLROOT; ?>css/style.css?v=<?php echo time(); ?>">
     <script>
         const theme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', theme);
     </script>
 </head>
-<body>
+<body class="login-page">
 
 <div class="login-container">
+    <div class="login-box">
 
     <!-- LEFT PANEL — Branding -->
     <div class="login-left">
@@ -104,7 +105,7 @@
             </form>
         </div>
     </div>
-
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
