@@ -11,7 +11,7 @@ class StartupValidator {
         'users' => [
             'id', 'username', 'password', 'role_id', 'status', 'last_login', 
             'created_at', 'updated_at', 'last_password_change', 'failed_attempts', 
-            'force_password_change', 'password_expiry_days'
+            'force_password_change', 'password_expiry_days', 'camp_id'
         ],
         'login_attempts' => ['id', 'ip_address', 'username', 'attempt_time'],
         'instructors' => [
@@ -19,7 +19,7 @@ class StartupValidator {
             'contact_no', 'email', 'profile_photo', 'photo_uploaded_at', 
             'status', 'created_at', 'updated_at'
         ],
-        'laboratories' => ['id', 'lab_code', 'lab_name', 'location', 'capacity', 'description', 'status', 'created_at', 'updated_at'],
+        'laboratories' => ['id', 'lab_code', 'lab_name', 'location', 'capacity', 'description', 'status', 'created_at', 'updated_at', 'camp_id'],
         'computers' => [
             'id', 'asset_no', 'serial_no', 'brand', 'model', 'processor', 'ram', 
             'storage', 'os', 'purchase_date', 'warranty_status', 'lab_id', 'status', 
@@ -30,7 +30,7 @@ class StartupValidator {
         'allocations' => [
             'id', 'instructor_id', 'lesson_id', 'lab_id', 'date', 'start_time', 'end_time', 
             'remarks', 'session_status', 'instructor_remarks', 'completed_at', 'completed_by', 
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'camp_id'
         ],
         'allocation_requests' => [
             'id', 'allocation_id', 'requester_id', 'type', 'new_date', 'new_start_time', 
@@ -43,7 +43,8 @@ class StartupValidator {
         'notices' => ['id', 'title', 'content', 'published_by', 'status', 'created_at', 'updated_at'],
         'audit_logs' => ['id', 'user_id', 'action', 'module', 'ip_address', 'details', 'created_at'],
         'system_settings' => ['setting_key', 'setting_value', 'description', 'updated_at'],
-        'password_history' => ['id', 'user_id', 'password_hash', 'changed_at']
+        'password_history' => ['id', 'user_id', 'password_hash', 'changed_at'],
+        'camps' => ['id', 'name', 'code', 'address', 'status', 'created_at', 'updated_at']
     ];
 
     /**

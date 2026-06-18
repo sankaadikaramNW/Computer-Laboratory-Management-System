@@ -7,11 +7,20 @@ class SmartBoardModel extends Model {
     /**
      * Get all smart boards
      */
-    public function getAllSmartBoards() {
-        $this->db->query("SELECT s.*, l.lab_name, l.lab_code 
-                          FROM smart_boards s 
-                          LEFT JOIN laboratories l ON s.lab_id = l.id 
-                          ORDER BY s.asset_id ASC");
+    public function getAllSmartBoards($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT s.*, l.lab_name, l.lab_code 
+                              FROM smart_boards s 
+                              LEFT JOIN laboratories l ON s.lab_id = l.id 
+                              WHERE l.camp_id = :camp_id
+                              ORDER BY s.asset_id ASC");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT s.*, l.lab_name, l.lab_code 
+                              FROM smart_boards s 
+                              LEFT JOIN laboratories l ON s.lab_id = l.id 
+                              ORDER BY s.asset_id ASC");
+        }
         return $this->db->resultSet();
     }
 

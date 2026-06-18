@@ -7,16 +7,41 @@ class LabModel extends Model {
     /**
      * Get all laboratories
      */
-    public function getAllLabs() {
-        $this->db->query("SELECT * FROM laboratories ORDER BY lab_code ASC");
+    public function getAllLabs($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT l.*, c.name as camp_name 
+                              FROM laboratories l 
+                              LEFT JOIN camps c ON l.camp_id = c.id 
+                              WHERE l.camp_id = :camp_id
+                              ORDER BY l.lab_code ASC");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT l.*, c.name as camp_name 
+                              FROM laboratories l 
+                              LEFT JOIN camps c ON l.camp_id = c.id 
+                              ORDER BY c.name ASC, l.lab_code ASC");
+        }
         return $this->db->resultSet();
     }
 
     /**
      * Get active laboratories
      */
-    public function getActiveLabs() {
-        $this->db->query("SELECT * FROM laboratories WHERE status = 'active' ORDER BY lab_code ASC");
+    public function getActiveLabs($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT l.*, c.name as camp_name 
+                              FROM laboratories l 
+                              LEFT JOIN camps c ON l.camp_id = c.id 
+                              WHERE l.status = 'active' AND l.camp_id = :camp_id 
+                              ORDER BY l.lab_code ASC");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT l.*, c.name as camp_name 
+                              FROM laboratories l 
+                              LEFT JOIN camps c ON l.camp_id = c.id 
+                              WHERE l.status = 'active' 
+                              ORDER BY l.lab_code ASC");
+        }
         return $this->db->resultSet();
     }
 
@@ -24,7 +49,10 @@ class LabModel extends Model {
      * Get lab details by ID
      */
     public function getLabById($id) {
-        $this->db->query("SELECT * FROM laboratories WHERE id = :id");
+        $this->db->query("SELECT l.*, c.name as camp_name 
+                          FROM laboratories l 
+                          LEFT JOIN camps c ON l.camp_id = c.id 
+                          WHERE l.id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single();
     }
@@ -48,8 +76,8 @@ class LabModel extends Model {
      * Create a laboratory
      */
     public function createLab($data) {
-        $this->db->query("INSERT INTO laboratories (lab_code, lab_name, location, capacity, description, status) 
-                          VALUES (:lab_code, :lab_name, :location, :capacity, :description, :status)");
+        $this->db->query("INSERT INTO laboratories (lab_code, lab_name, location, capacity, description, status, camp_id) 
+                          VALUES (:lab_code, :lab_name, :location, :capacity, :description, :status, :camp_id)");
         
         $this->db->bind(':lab_code', $data['lab_code']);
         $this->db->bind(':lab_name', $data['lab_name']);
@@ -57,6 +85,7 @@ class LabModel extends Model {
         $this->db->bind(':capacity', $data['capacity']);
         $this->db->bind(':description', $data['description']);
         $this->db->bind(':status', $data['status']);
+        $this->db->bind(':camp_id', $data['camp_id']);
         
         return $this->db->execute();
     }
@@ -71,7 +100,8 @@ class LabModel extends Model {
                               location = :location, 
                               capacity = :capacity, 
                               description = :description, 
-                              status = :status 
+                              status = :status,
+                              camp_id = :camp_id 
                           WHERE id = :id");
         
         $this->db->bind(':lab_code', $data['lab_code']);
@@ -80,6 +110,7 @@ class LabModel extends Model {
         $this->db->bind(':capacity', $data['capacity']);
         $this->db->bind(':description', $data['description']);
         $this->db->bind(':status', $data['status']);
+        $this->db->bind(':camp_id', $data['camp_id']);
         $this->db->bind(':id', $id);
         
         return $this->db->execute();
@@ -97,12 +128,22 @@ class LabModel extends Model {
     /**
      * Get lab utilization statistics (total sessions, active time)
      */
-    public function getLabUtilizationStats() {
-        $this->db->query("SELECT l.lab_name, l.lab_code, COUNT(a.id) as total_sessions, 
-                                 IFNULL(SUM(TIMESTAMPDIFF(MINUTE, a.start_time, a.end_time)) / 60, 0) as total_hours
-                          FROM laboratories l 
-                          LEFT JOIN allocations a ON l.id = a.lab_id 
-                          GROUP BY l.id");
+    public function getLabUtilizationStats($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT l.lab_name, l.lab_code, COUNT(a.id) as total_sessions, 
+                                     IFNULL(SUM(TIMESTAMPDIFF(MINUTE, a.start_time, a.end_time)) / 60, 0) as total_hours
+                              FROM laboratories l 
+                              LEFT JOIN allocations a ON l.id = a.lab_id 
+                              WHERE l.camp_id = :camp_id
+                              GROUP BY l.id");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT l.lab_name, l.lab_code, COUNT(a.id) as total_sessions, 
+                                     IFNULL(SUM(TIMESTAMPDIFF(MINUTE, a.start_time, a.end_time)) / 60, 0) as total_hours
+                              FROM laboratories l 
+                              LEFT JOIN allocations a ON l.id = a.lab_id 
+                              GROUP BY l.id");
+        }
         return $this->db->resultSet();
     }
 }

@@ -109,6 +109,8 @@ class AuthController extends Controller {
                 $_SESSION['user_role_id'] = (int)$user->role_id;
                 $_SESSION['user_role_name'] = $user->role_name;
                 $_SESSION['last_activity'] = time();
+                $_SESSION['camp_id'] = $user->camp_id ? (int)$user->camp_id : null;
+                $_SESSION['camp_name'] = $user->camp_name ?? null;
 
                 // Set password change flag in session if needed
                 if ($mustChangePassword) {
@@ -138,7 +140,7 @@ class AuthController extends Controller {
                 if ($mustChangePassword) {
                     flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
                     redirect('auth/changePassword');
-                } elseif ($user->role_id === 1) {
+                } elseif ($user->role_id === 1 || $user->role_id === 3) {
                     redirect('dashboard/admin');
                 } else {
                     redirect('dashboard/instructor');

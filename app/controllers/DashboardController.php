@@ -17,8 +17,9 @@ class DashboardController extends Controller {
     private function updateSessionCounters() {
         $reqModel = $this->model('RequestModel');
         $faultModel = $this->model('FaultModel');
-        $_SESSION['pending_requests_count'] = $reqModel->getPendingRequestsCount();
-        $_SESSION['pending_faults_count'] = $faultModel->getPendingFaultsCount();
+        $campId = isCampAdmin() ? $_SESSION['camp_id'] : null;
+        $_SESSION['pending_requests_count'] = $reqModel->getPendingRequestsCount($campId);
+        $_SESSION['pending_faults_count'] = $faultModel->getPendingFaultsCount($campId);
     }
 
     /**
@@ -38,26 +39,37 @@ class DashboardController extends Controller {
         $maintModel = $this->model('MaintenanceModel');
         $noticeModel = $this->model('NoticeModel');
         $auditModel = $this->model('AuditModel');
+        $campModel = $this->model('CampModel');
 
-        $statsToday = $allocModel->getAdminDashboardStats();
+        $campId = null;
+        if (isCampAdmin()) {
+            $campId = $_SESSION['camp_id'];
+        } else if (isSuperAdmin()) {
+            $campId = filter_input(INPUT_GET, 'camp_id', FILTER_VALIDATE_INT) ?: null;
+        }
+
+        $statsToday = $allocModel->getAdminDashboardStats($campId);
 
         // Compile counts
         $data = [
             'title' => 'Admin Dashboard',
             'active_menu' => 'dashboard',
-            'total_labs' => count($labModel->getAllLabs()),
-            'total_computers' => count($compModel->getAllComputers()),
-            'total_smartboards' => count($sbModel->getAllSmartBoards()),
+            'total_labs' => count($labModel->getAllLabs($campId)),
+            'active_labs' => count($labModel->getActiveLabs($campId)),
+            'total_computers' => count($compModel->getAllComputers($campId)),
+            'total_smartboards' => count($sbModel->getAllSmartBoards($campId)),
             'total_instructors' => count($instModel->getAllInstructors()),
-            'sessions_today' => $allocModel->getActiveSessionsToday(),
-            'pending_requests' => $reqModel->getPendingRequestsCount(),
-            'pending_faults' => $faultModel->getPendingFaultsCount(),
-            'pending_maintenance' => $maintModel->getPendingMaintenanceCount(),
-            'upcoming_sessions' => $allocModel->getUpcomingSessions(5),
+            'sessions_today' => $allocModel->getActiveSessionsToday($campId),
+            'pending_requests' => $reqModel->getPendingRequestsCount($campId),
+            'pending_faults' => $faultModel->getPendingFaultsCount($campId),
+            'pending_maintenance' => $maintModel->getPendingMaintenanceCount($campId),
+            'upcoming_sessions' => $allocModel->getUpcomingSessions(5, $campId),
             'recent_notices' => $noticeModel->getActiveNotices(),
             'recent_logs' => array_slice($auditModel->getAllLogs(), 0, 8),
-            'utilization' => $labModel->getLabUtilizationStats(),
-            'stats_today' => $statsToday
+            'utilization' => $labModel->getLabUtilizationStats($campId),
+            'stats_today' => $statsToday,
+            'camps' => $campModel->getActiveCamps(),
+            'current_camp_id' => $campId
         ];
 
         $this->view('templates/header', $data);

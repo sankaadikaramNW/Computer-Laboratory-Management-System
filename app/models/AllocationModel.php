@@ -7,28 +7,45 @@ class AllocationModel extends Model {
     /**
      * Get all allocations
      */
-    public function getAllAllocations() {
-        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name, les.lesson_code 
-                          FROM allocations a 
-                          JOIN laboratories l ON a.lab_id = l.id 
-                          JOIN instructors i ON a.instructor_id = i.id 
-                          JOIN lessons les ON a.lesson_id = les.id 
-                          ORDER BY a.date DESC, a.start_time ASC");
+    public function getAllAllocations($campId = null) {
+        $sql = "SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name, les.lesson_code 
+                FROM allocations a 
+                JOIN laboratories l ON a.lab_id = l.id 
+                LEFT JOIN camps c ON a.camp_id = c.id
+                JOIN instructors i ON a.instructor_id = i.id 
+                JOIN lessons les ON a.lesson_id = les.id";
+        if ($campId) {
+            $sql .= " WHERE a.camp_id = :camp_id";
+        }
+        $sql .= " ORDER BY a.date DESC, a.start_time ASC";
+        
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         return $this->db->resultSet();
     }
 
     /**
      * Get allocations inside a date range (for FullCalendar)
      */
-    public function getAllocationsByDateRange($start, $end) {
-        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name, les.lesson_code 
-                          FROM allocations a 
-                          JOIN laboratories l ON a.lab_id = l.id 
-                          JOIN instructors i ON a.instructor_id = i.id 
-                          JOIN lessons les ON a.lesson_id = les.id 
-                          WHERE a.date BETWEEN :start AND :end");
+    public function getAllocationsByDateRange($start, $end, $campId = null) {
+        $sql = "SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name, les.lesson_code 
+                FROM allocations a 
+                JOIN laboratories l ON a.lab_id = l.id 
+                LEFT JOIN camps c ON a.camp_id = c.id
+                JOIN instructors i ON a.instructor_id = i.id 
+                JOIN lessons les ON a.lesson_id = les.id 
+                WHERE a.date BETWEEN :start AND :end";
+        if ($campId) {
+            $sql .= " AND a.camp_id = :camp_id";
+        }
+        $this->db->query($sql);
         $this->db->bind(':start', $start);
         $this->db->bind(':end', $end);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         return $this->db->resultSet();
     }
 
@@ -36,9 +53,10 @@ class AllocationModel extends Model {
      * Get allocation by ID
      */
     public function getAllocationById($id) {
-        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, i.trade as instructor_trade, i.user_id as instructor_user_id, les.lesson_name, les.lesson_code, les.duration as lesson_duration
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, i.full_name as instructor_name, i.rank as instructor_rank, i.trade as instructor_trade, i.user_id as instructor_user_id, les.lesson_name, les.lesson_code, les.duration as lesson_duration
                           FROM allocations a 
                           JOIN laboratories l ON a.lab_id = l.id 
+                          LEFT JOIN camps c ON a.camp_id = c.id
                           JOIN instructors i ON a.instructor_id = i.id 
                           JOIN lessons les ON a.lesson_id = les.id 
                           WHERE a.id = :id");
@@ -87,8 +105,8 @@ class AllocationModel extends Model {
      * Create an allocation
      */
     public function createAllocation($data) {
-        $this->db->query("INSERT INTO allocations (instructor_id, lesson_id, lab_id, date, start_time, end_time, remarks) 
-                          VALUES (:instructor_id, :lesson_id, :lab_id, :date, :start_time, :end_time, :remarks)");
+        $this->db->query("INSERT INTO allocations (instructor_id, lesson_id, lab_id, date, start_time, end_time, remarks, camp_id) 
+                          VALUES (:instructor_id, :lesson_id, :lab_id, :date, :start_time, :end_time, :remarks, :camp_id)");
         
         $this->db->bind(':instructor_id', $data['instructor_id']);
         $this->db->bind(':lesson_id', $data['lesson_id']);
@@ -97,6 +115,7 @@ class AllocationModel extends Model {
         $this->db->bind(':start_time', $data['start_time']);
         $this->db->bind(':end_time', $data['end_time']);
         $this->db->bind(':remarks', $data['remarks'] ?: null);
+        $this->db->bind(':camp_id', $data['camp_id']);
         
         if ($this->db->execute()) {
             return $this->db->lastInsertId();
@@ -115,7 +134,8 @@ class AllocationModel extends Model {
                               date = :date, 
                               start_time = :start_time, 
                               end_time = :end_time, 
-                              remarks = :remarks 
+                              remarks = :remarks,
+                              camp_id = :camp_id 
                           WHERE id = :id");
         
         $this->db->bind(':instructor_id', $data['instructor_id']);
@@ -125,6 +145,7 @@ class AllocationModel extends Model {
         $this->db->bind(':start_time', $data['start_time']);
         $this->db->bind(':end_time', $data['end_time']);
         $this->db->bind(':remarks', $data['remarks'] ?: null);
+        $this->db->bind(':camp_id', $data['camp_id']);
         $this->db->bind(':id', $id);
         
         return $this->db->execute();
@@ -196,8 +217,15 @@ class AllocationModel extends Model {
     /**
      * Get total active allocations count for today
      */
-    public function getActiveSessionsToday() {
-        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE()");
+    public function getActiveSessionsToday($campId = null) {
+        $sql = "SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE()";
+        if ($campId) {
+            $sql .= " AND camp_id = :camp_id";
+        }
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         $row = $this->db->single();
         return $row ? (int)$row->count : 0;
     }
@@ -205,16 +233,23 @@ class AllocationModel extends Model {
     /**
      * Get upcoming allocations limit
      */
-    public function getUpcomingSessions($limit = 5) {
-        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name 
-                          FROM allocations a 
-                          JOIN laboratories l ON a.lab_id = l.id 
-                          JOIN instructors i ON a.instructor_id = i.id 
-                          JOIN lessons les ON a.lesson_id = les.id 
-                          WHERE a.date >= CURDATE() 
-                          ORDER BY a.date ASC, a.start_time ASC 
-                          LIMIT :limit");
+    public function getUpcomingSessions($limit = 5, $campId = null) {
+        $sql = "SELECT a.*, l.lab_name, l.lab_code, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name 
+                FROM allocations a 
+                JOIN laboratories l ON a.lab_id = l.id 
+                JOIN instructors i ON a.instructor_id = i.id 
+                JOIN lessons les ON a.lesson_id = les.id 
+                WHERE a.date >= CURDATE()";
+        if ($campId) {
+            $sql .= " AND a.camp_id = :camp_id";
+        }
+        $sql .= " ORDER BY a.date ASC, a.start_time ASC 
+                  LIMIT :limit";
+        $this->db->query($sql);
         $this->db->bind(':limit', $limit);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         return $this->db->resultSet();
     }
 
@@ -448,27 +483,54 @@ class AllocationModel extends Model {
     /**
      * Get administrator dashboard stats today
      */
-    public function getAdminDashboardStats() {
+    public function getAdminDashboardStats($campId = null) {
         $stats = [];
         
         // Scheduled Sessions Today
-        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Scheduled'");
+        $sql = "SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Scheduled'";
+        if ($campId) {
+            $sql .= " AND camp_id = :camp_id";
+        }
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         $row = $this->db->single();
         $stats['scheduled_today'] = $row ? (int)$row->count : 0;
         
         // Completed Sessions Today
-        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status IN ('Completed Successfully', 'Partially Completed', 'Completed')");
+        $sql = "SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status IN ('Completed Successfully', 'Partially Completed', 'Completed')";
+        if ($campId) {
+            $sql .= " AND camp_id = :camp_id";
+        }
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         $row = $this->db->single();
         $stats['completed_today'] = $row ? (int)$row->count : 0;
         
-        // Cancelled Sessions Today or Total (let's do total cancelled as per request)
-        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE session_status = 'Cancelled'");
+        // Cancelled Sessions Today or Total
+        $sql = "SELECT COUNT(*) as count FROM allocations WHERE session_status = 'Cancelled'";
+        if ($campId) {
+            $sql .= " AND camp_id = :camp_id";
+        }
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         $row = $this->db->single();
         $stats['cancelled_total'] = $row ? (int)$row->count : 0;
         
         // Completion Percentage Today
-        // Percentage = (Completed Today / (Scheduled Today + Completed Today + Cancelled Today)) * 100
-        $this->db->query("SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Cancelled'");
+        $sql = "SELECT COUNT(*) as count FROM allocations WHERE date = CURDATE() AND session_status = 'Cancelled'";
+        if ($campId) {
+            $sql .= " AND camp_id = :camp_id";
+        }
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         $row = $this->db->single();
         $cancelled_today = $row ? (int)$row->count : 0;
         

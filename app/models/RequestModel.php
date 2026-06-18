@@ -101,8 +101,15 @@ class RequestModel extends Model {
     /**
      * Get count of pending requests
      */
-    public function getPendingRequestsCount() {
-        $this->db->query("SELECT COUNT(*) as count FROM allocation_requests WHERE status = 'pending'");
+    public function getPendingRequestsCount($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT COUNT(*) as count FROM allocation_requests r
+                              LEFT JOIN allocations a ON r.allocation_id = a.id
+                              WHERE r.status = 'pending' AND a.camp_id = :camp_id");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT COUNT(*) as count FROM allocation_requests WHERE status = 'pending'");
+        }
         $row = $this->db->single();
         return $row ? (int)$row->count : 0;
     }

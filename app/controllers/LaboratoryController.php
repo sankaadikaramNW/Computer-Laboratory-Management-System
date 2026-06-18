@@ -17,12 +17,20 @@ class LaboratoryController extends Controller {
     public function index() {
         requireAdmin();
 
-        $labs = $this->labModel->getAllLabs();
+        $campModel = $this->model('CampModel');
+        if (isSuperAdmin()) {
+            $labs = $this->labModel->getAllLabs();
+            $camps = $campModel->getActiveCamps();
+        } else {
+            $labs = $this->labModel->getAllLabs($_SESSION['camp_id']);
+            $camps = [$campModel->getCampById($_SESSION['camp_id'])];
+        }
         
         $data = [
             'title' => 'Laboratory Management',
             'active_menu' => 'laboratories',
-            'labs' => $labs
+            'labs' => $labs,
+            'camps' => $camps
         ];
 
         $this->view('templates/header', $data);
@@ -49,6 +57,12 @@ class LaboratoryController extends Controller {
             $description = trim($_POST['description']);
             $status = $_POST['status'] ?? 'active';
 
+            if (isSuperAdmin()) {
+                $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : 5; // Falls back to SLAF Ekala
+            } else {
+                $campId = (int)$_SESSION['camp_id'];
+            }
+
             // Validate duplicate code
             if ($this->labModel->checkLabCodeExists($labCode)) {
                 flash('dashboard_error', "Laboratory code '{$labCode}' already exists.", 'alert alert-danger');
@@ -61,7 +75,8 @@ class LaboratoryController extends Controller {
                 'location' => $location,
                 'capacity' => $capacity,
                 'description' => $description,
-                'status' => $status
+                'status' => $status,
+                'camp_id' => $campId
             ];
 
             if ($this->labModel->createLab($data)) {
@@ -80,6 +95,18 @@ class LaboratoryController extends Controller {
     public function update($id) {
         requireAdmin();
 
+        $lab = $this->labModel->getLabById($id);
+        if (!$lab) {
+            flash('dashboard_error', 'Laboratory not found.', 'alert alert-danger');
+            redirect('laboratory');
+        }
+
+        // Access check
+        if (isCampAdmin() && (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only manage laboratories in your own camp.', 'alert alert-danger');
+            redirect('laboratory');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
@@ -93,6 +120,12 @@ class LaboratoryController extends Controller {
             $description = trim($_POST['description']);
             $status = $_POST['status'] ?? 'active';
 
+            if (isSuperAdmin()) {
+                $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : 5;
+            } else {
+                $campId = (int)$_SESSION['camp_id'];
+            }
+
             // Validate duplicate code excluding current lab
             if ($this->labModel->checkLabCodeExists($labCode, $id)) {
                 flash('dashboard_error', "Another laboratory is already using code '{$labCode}'.", 'alert alert-danger');
@@ -105,7 +138,8 @@ class LaboratoryController extends Controller {
                 'location' => $location,
                 'capacity' => $capacity,
                 'description' => $description,
-                'status' => $status
+                'status' => $status,
+                'camp_id' => $campId
             ];
 
             if ($this->labModel->updateLab($id, $data)) {
@@ -125,13 +159,22 @@ class LaboratoryController extends Controller {
         requireAdmin();
 
         $lab = $this->labModel->getLabById($id);
-        if ($lab) {
-            if ($this->labModel->deleteLab($id)) {
-                $this->logActivity('DELETE_LABORATORY', 'LABORATORIES', "Removed laboratory '{$lab->lab_code}' - {$lab->lab_name}");
-                flash('dashboard_success', 'Laboratory removed from database.', 'alert alert-success');
-            } else {
-                flash('dashboard_error', 'Failed to delete laboratory (check if referenced by schedules).', 'alert alert-danger');
-            }
+        if (!$lab) {
+            flash('dashboard_error', 'Laboratory not found.', 'alert alert-danger');
+            redirect('laboratory');
+        }
+
+        // Access check
+        if (isCampAdmin() && (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only delete laboratories in your own camp.', 'alert alert-danger');
+            redirect('laboratory');
+        }
+
+        if ($this->labModel->deleteLab($id)) {
+            $this->logActivity('DELETE_LABORATORY', 'LABORATORIES', "Removed laboratory '{$lab->lab_code}' - {$lab->lab_name}");
+            flash('dashboard_success', 'Laboratory removed from database.', 'alert alert-success');
+        } else {
+            flash('dashboard_error', 'Failed to delete laboratory (check if referenced by schedules).', 'alert alert-danger');
         }
         redirect('laboratory');
     }
