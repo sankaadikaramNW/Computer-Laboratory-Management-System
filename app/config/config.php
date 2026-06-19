@@ -45,6 +45,10 @@ function loadEnv($filePath) {
 // Load root .env file (two levels up from app/config/config.php)
 loadEnv(dirname(dirname(__DIR__)) . '/.env');
 
+// Set System Timezone
+$timezone = getenv('TIMEZONE') ?: 'Asia/Colombo';
+date_default_timezone_set($timezone);
+
 // Database Parameters (loaded from environment variables)
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_USER', getenv('DB_USER') ?: 'root');
