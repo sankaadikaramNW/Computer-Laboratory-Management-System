@@ -7,20 +7,30 @@ class RequestModel extends Model {
     /**
      * Get all change requests
      */
-    public function getAllRequests() {
-        $this->db->query("SELECT r.*, u.username as requester_name, inst.full_name as instructor_name, inst.rank as instructor_rank,
-                                 a.date as old_date, a.start_time as old_start_time, a.end_time as old_end_time, 
-                                 l.lab_code as old_lab_code, l.lab_name as old_lab_name,
-                                 nl.lab_code as new_lab_code, nl.lab_name as new_lab_name,
-                                 les.lesson_name
-                          FROM allocation_requests r 
-                          JOIN users u ON r.requester_id = u.id 
-                          LEFT JOIN instructors inst ON u.id = inst.user_id
-                          LEFT JOIN allocations a ON r.allocation_id = a.id 
-                          LEFT JOIN lessons les ON a.lesson_id = les.id
-                          LEFT JOIN laboratories l ON a.lab_id = l.id 
-                          LEFT JOIN laboratories nl ON r.new_lab_id = nl.id 
-                          ORDER BY r.created_at DESC");
+    public function getAllRequests($campId = null) {
+        $sql = "SELECT r.*, u.username as requester_name, inst.full_name as instructor_name, inst.rank as instructor_rank,
+                       a.date as old_date, a.start_time as old_start_time, a.end_time as old_end_time, a.camp_id,
+                       l.lab_code as old_lab_code, l.lab_name as old_lab_name,
+                       nl.lab_code as new_lab_code, nl.lab_name as new_lab_name,
+                       les.lesson_name
+                FROM allocation_requests r 
+                JOIN users u ON r.requester_id = u.id 
+                LEFT JOIN instructors inst ON u.id = inst.user_id
+                LEFT JOIN allocations a ON r.allocation_id = a.id 
+                LEFT JOIN lessons les ON a.lesson_id = les.id
+                LEFT JOIN laboratories l ON a.lab_id = l.id 
+                LEFT JOIN laboratories nl ON r.new_lab_id = nl.id";
+        
+        if ($campId) {
+            $sql .= " WHERE a.camp_id = :camp_id";
+        }
+        
+        $sql .= " ORDER BY r.created_at DESC";
+        
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         return $this->db->resultSet();
     }
 
@@ -49,7 +59,7 @@ class RequestModel extends Model {
      */
     public function getRequestById($id) {
         $this->db->query("SELECT r.*, u.username as requester_name, inst.full_name as instructor_name, inst.rank as instructor_rank, inst.id as instructor_id,
-                                 a.date as old_date, a.start_time as old_start_time, a.end_time as old_end_time, a.instructor_id as old_instructor_id, a.lesson_id as old_lesson_id, a.lab_id as old_lab_id,
+                                 a.date as old_date, a.start_time as old_start_time, a.end_time as old_end_time, a.instructor_id as old_instructor_id, a.lesson_id as old_lesson_id, a.lab_id as old_lab_id, a.camp_id,
                                  l.lab_code as old_lab_code, l.lab_name as old_lab_name,
                                  nl.lab_code as new_lab_code, nl.lab_name as new_lab_name,
                                  les.lesson_name

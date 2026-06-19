@@ -124,6 +124,12 @@ class AllocationController extends Controller {
                 redirect('allocation/schedule');
             }
 
+            // Prevent past date or time allocations
+            if (strtotime($date . ' ' . $startTime) < time()) {
+                flash('dashboard_error', 'Cannot allocate lab for a past date or time.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
             // 2. Perform Conflict Check (overlap rules)
             $conflicts = $this->allocModel->checkConflicts($date, $startTime, $endTime, $labId, $instructorId);
             if (!empty($conflicts)) {
@@ -215,6 +221,12 @@ class AllocationController extends Controller {
 
             if (strtotime($startTime) >= strtotime($endTime)) {
                 flash('dashboard_error', 'Start time must be before end time.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
+            // Prevent past date or time allocations
+            if (strtotime($date . ' ' . $startTime) < time()) {
+                flash('dashboard_error', 'Cannot allocate lab for a past date or time.', 'alert alert-danger');
                 redirect('allocation/schedule');
             }
 
@@ -456,6 +468,12 @@ class AllocationController extends Controller {
             // Access control check
             if (isCampAdmin() && (int)$alloc->camp_id !== (int)$_SESSION['camp_id']) {
                 $this->json(['success' => false, 'message' => 'Access denied. You can only move allocations in your own camp.'], 403);
+                return;
+            }
+
+            // Prevent past date or time allocations
+            if (strtotime($newDate . ' ' . $newStartTime) < time()) {
+                $this->json(['success' => false, 'message' => 'Cannot move allocation to a past date or time.']);
                 return;
             }
 

@@ -7,14 +7,27 @@ class MaintenanceModel extends Model {
     /**
      * Get all maintenance logs
      */
-    public function getAllRecords() {
-        $this->db->query("SELECT m.*, 
-                                 c.asset_no as computer_asset_no, c.brand as computer_brand, c.model as computer_model,
-                                 s.asset_id as smartboard_asset_id, s.brand as smartboard_brand, s.model as smartboard_model
-                          FROM maintenance_records m
-                          LEFT JOIN computers c ON m.equipment_type = 'computer' AND m.equipment_id = c.id
-                          LEFT JOIN smart_boards s ON m.equipment_type = 'smart_board' AND m.equipment_id = s.id
-                          ORDER BY m.repair_date DESC, m.created_at DESC");
+    public function getAllRecords($campId = null) {
+        $sql = "SELECT m.*, 
+                       c.asset_no as computer_asset_no, c.brand as computer_brand, c.model as computer_model,
+                       s.asset_id as smartboard_asset_id, s.brand as smartboard_brand, s.model as smartboard_model,
+                       COALESCE(lc.camp_id, ls.camp_id) as camp_id
+                FROM maintenance_records m
+                LEFT JOIN computers c ON m.equipment_type = 'computer' AND m.equipment_id = c.id
+                LEFT JOIN smart_boards s ON m.equipment_type = 'smart_board' AND m.equipment_id = s.id
+                LEFT JOIN laboratories lc ON c.lab_id = lc.id
+                LEFT JOIN laboratories ls ON s.lab_id = ls.id";
+        
+        if ($campId) {
+            $sql .= " WHERE COALESCE(lc.camp_id, ls.camp_id) = :camp_id";
+        }
+        
+        $sql .= " ORDER BY m.repair_date DESC, m.created_at DESC";
+        
+        $this->db->query($sql);
+        if ($campId) {
+            $this->db->bind(':camp_id', $campId);
+        }
         return $this->db->resultSet();
     }
 
@@ -24,10 +37,13 @@ class MaintenanceModel extends Model {
     public function getRecordById($id) {
         $this->db->query("SELECT m.*, 
                                  c.asset_no as computer_asset_no, c.brand as computer_brand, c.model as computer_model,
-                                 s.asset_id as smartboard_asset_id, s.brand as smartboard_brand, s.model as smartboard_model
+                                 s.asset_id as smartboard_asset_id, s.brand as smartboard_brand, s.model as smartboard_model,
+                                 COALESCE(lc.camp_id, ls.camp_id) as camp_id
                           FROM maintenance_records m
                           LEFT JOIN computers c ON m.equipment_type = 'computer' AND m.equipment_id = c.id
                           LEFT JOIN smart_boards s ON m.equipment_type = 'smart_board' AND m.equipment_id = s.id
+                          LEFT JOIN laboratories lc ON c.lab_id = lc.id
+                          LEFT JOIN laboratories ls ON s.lab_id = ls.id
                           WHERE m.id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single();

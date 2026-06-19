@@ -141,86 +141,98 @@
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-3 mb-4">
     <!-- Total Labs -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-blue h-100">
-            <div>
-                <p class="stats-label mb-1">Total Laboratories</p>
-                <h3 class="stats-count m-0"><?php echo $data['total_labs']; ?></h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Registered rooms</small>
+        <a href="<?php echo URLROOT; ?>laboratory" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-blue h-100">
+                <div>
+                    <p class="stats-label mb-1">Total Laboratories</p>
+                    <h3 class="stats-count m-0"><?php echo $data['total_labs']; ?></h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Registered rooms</small>
+                </div>
+                <div class="stats-icon-wrapper icon-blue">
+                    <i class="bi bi-door-closed-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-blue">
-                <i class="bi bi-door-closed-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
     
     <!-- Active Labs -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-green h-100">
-            <div>
-                <p class="stats-label mb-1">Active Labs</p>
-                <h3 class="stats-count m-0 text-success"><?php echo $data['active_labs'] ?? $data['total_labs']; ?></h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">In active status</small>
+        <a href="<?php echo URLROOT; ?>laboratory" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-green h-100">
+                <div>
+                    <p class="stats-label mb-1">Active Labs</p>
+                    <h3 class="stats-count m-0 text-success"><?php echo $data['active_labs'] ?? $data['total_labs']; ?></h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">In active status</small>
+                </div>
+                <div class="stats-icon-wrapper icon-green">
+                    <i class="bi bi-door-open-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-green">
-                <i class="bi bi-door-open-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Total Scheduled Today -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-blue h-100">
-            <div>
-                <p class="stats-label mb-1">Scheduled Today</p>
-                <h3 class="stats-count m-0 text-primary"><?php echo $data['stats_today']['scheduled_today']; ?></h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Awaiting execution</small>
+        <a href="<?php echo URLROOT; ?>allocation/schedule" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-blue h-100">
+                <div>
+                    <p class="stats-label mb-1">Scheduled Today</p>
+                    <h3 class="stats-count m-0 text-primary"><?php echo $data['stats_today']['scheduled_today']; ?></h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Awaiting execution</small>
+                </div>
+                <div class="stats-icon-wrapper icon-blue">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-blue">
-                <i class="bi bi-calendar-event-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Total Completed Today -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-green h-100">
-            <div>
-                <p class="stats-label mb-1">Completed Today</p>
-                <h3 class="stats-count m-0 text-success"><?php echo $data['stats_today']['completed_today']; ?></h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Logged successfully</small>
+        <a href="<?php echo URLROOT; ?>report" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-green h-100">
+                <div>
+                    <p class="stats-label mb-1">Completed Today</p>
+                    <h3 class="stats-count m-0 text-success"><?php echo $data['stats_today']['completed_today']; ?></h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Logged successfully</small>
+                </div>
+                <div class="stats-icon-wrapper icon-green">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-green">
-                <i class="bi bi-check-circle-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Total Cancelled Sessions -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-red h-100">
-            <div>
-                <p class="stats-label mb-1">Cancelled Today</p>
-                <h3 class="stats-count m-0 text-danger"><?php echo $data['stats_today']['cancelled_total']; ?></h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Total cancelled overall</small>
+        <a href="<?php echo URLROOT; ?>allocation/schedule" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-red h-100">
+                <div>
+                    <p class="stats-label mb-1">Cancelled Today</p>
+                    <h3 class="stats-count m-0 text-danger"><?php echo $data['stats_today']['cancelled_total']; ?></h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Total cancelled overall</small>
+                </div>
+                <div class="stats-icon-wrapper icon-red">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-red">
-                <i class="bi bi-x-circle-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Session Completion Percentage -->
     <div class="col">
-        <div class="stats-card kpi-tile accent-blue h-100">
-            <div>
-                <p class="stats-label mb-1">Completion Rate</p>
-                <h3 class="stats-count m-0" style="color:var(--primary);"><?php echo $data['stats_today']['completion_percentage']; ?>%</h3>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Today's target metrics</small>
+        <a href="<?php echo URLROOT; ?>report" class="text-decoration-none d-block h-100">
+            <div class="stats-card kpi-tile accent-blue h-100">
+                <div>
+                    <p class="stats-label mb-1">Completion Rate</p>
+                    <h3 class="stats-count m-0" style="color:var(--primary);"><?php echo $data['stats_today']['completion_percentage']; ?>%</h3>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Today's target metrics</small>
+                </div>
+                <div class="stats-icon-wrapper icon-blue">
+                    <i class="bi bi-percent"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-blue">
-                <i class="bi bi-percent"></i>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 

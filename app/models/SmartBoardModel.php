@@ -28,7 +28,7 @@ class SmartBoardModel extends Model {
      * Get smart board by ID
      */
     public function getSmartBoardById($id) {
-        $this->db->query("SELECT s.*, l.lab_name, l.lab_code 
+        $this->db->query("SELECT s.*, l.lab_name, l.lab_code, l.camp_id 
                           FROM smart_boards s 
                           LEFT JOIN laboratories l ON s.lab_id = l.id 
                           WHERE s.id = :id");

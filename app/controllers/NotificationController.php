@@ -33,7 +33,8 @@ class NotificationController extends Controller {
      * Mark a specific notification as read (Redirect or API)
      */
     public function markAsRead($id) {
-        $this->notifModel->markAsRead($id);
+        $userId = $_SESSION['user_id'];
+        $this->notifModel->markAsRead($id, $userId);
         
         // If AJAX request, return JSON
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {

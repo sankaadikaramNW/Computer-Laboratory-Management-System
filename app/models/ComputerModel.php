@@ -28,7 +28,7 @@ class ComputerModel extends Model {
      * Get computer by ID
      */
     public function getComputerById($id) {
-        $this->db->query("SELECT c.*, l.lab_name, l.lab_code 
+        $this->db->query("SELECT c.*, l.lab_name, l.lab_code, l.camp_id 
                           FROM computers c 
                           LEFT JOIN laboratories l ON c.lab_id = l.id 
                           WHERE c.id = :id");
