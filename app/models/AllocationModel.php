@@ -246,7 +246,7 @@ class AllocationModel extends Model {
         $sql .= " ORDER BY a.date ASC, a.start_time ASC 
                   LIMIT :limit";
         $this->db->query($sql);
-        $this->db->bind(':limit', $limit);
+        $this->db->bind(':limit', (int)$limit);
         if ($campId) {
             $this->db->bind(':camp_id', $campId);
         }
@@ -444,7 +444,7 @@ class AllocationModel extends Model {
                           ORDER BY a.date ASC, a.start_time ASC 
                           LIMIT :limit");
         $this->db->bind(':instructor_id', $instructorId);
-        $this->db->bind(':limit', $limit);
+        $this->db->bind(':limit', (int)$limit);
         return $this->db->resultSet();
     }
 
