@@ -127,7 +127,11 @@ class StartupValidator {
             }
         } catch (PDOException $e) {
             self::logError("Database Connection Failed: " . $e->getMessage(), 'DB_CONNECTION_ERROR');
-            self::displayErrorPage('DB_CONNECTION_ERROR', "Could not connect to the database. Verify DB_HOST, DB_USER, DB_PASS, and DB_NAME settings.\nError details: " . $e->getMessage());
+            $errorDetails = "Could not connect to the database. Verify DB_HOST, DB_USER, DB_PASS, and DB_NAME settings.";
+            if (getenv('APP_ENV') !== 'production') {
+                $errorDetails .= "\nError details: " . $e->getMessage();
+            }
+            self::displayErrorPage('DB_CONNECTION_ERROR', $errorDetails);
         }
 
         // Store warnings in session for administrator visibility

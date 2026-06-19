@@ -1,4 +1,6 @@
 # ── Credentials & Environment ──────────────────────────────────────────────
+.env
+.env.local
 deploy_infinityfree/config_for_infinityfree.php
 deploy_infinityfree/htdocs/
 
