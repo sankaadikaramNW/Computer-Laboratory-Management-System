@@ -100,6 +100,9 @@
                         <i class="bi bi-shield-lock me-1"></i>
                         Unauthorized access is strictly prohibited and logged.
                     </small>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+        System Developed 2026/1  Comp. Tech Advanced Course project
+    </small>
                 </div>
             </form>
         </div>
