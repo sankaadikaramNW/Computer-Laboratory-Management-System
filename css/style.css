@@ -346,32 +346,83 @@ h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);font-weight:700;color:var(--te
 .fc-toolbar-title{font-family:var(--font-heading)!important;font-size:1.1rem!important;color:var(--text-h)!important;}
 
 /* ── LOGIN PAGE ── */
-.login-container{
-    min-height:100vh;display:flex;align-items:stretch;
+.login-page {
+    position: relative;
+    min-height: 100vh;
 }
-.login-left{
-    flex:1;background:var(--primary-grad);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:48px 40px;color:#fff;
-}
-.login-left h1{font-size:2rem;color:#fff;margin-bottom:12px;line-height:1.2;}
-.login-left p{color:rgba(255,255,255,0.8);font-size:1rem;max-width:340px;text-align:center;}
-.login-right{
-    width:480px;background:#fff;display:flex;align-items:center;
-    justify-content:center;padding:48px 40px;
-}
-.login-card{width:100%;max-width:380px;}
-.login-header{text-align:center;margin-bottom:28px;}
-.login-header h4{font-size:1.5rem;color:var(--primary-dark);margin-bottom:6px;}
-.login-header p{font-size:0.9rem;color:var(--text-muted);}
-.login-logo{width:68px;height:68px;margin-bottom:14px;}
 
-[data-theme="dark"] .login-right{background:var(--bg-card);}
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+}
 
-@media(max-width:768px){
-    .login-left{display:none;}
-    .login-right{width:100%;min-height:100vh;}
-    .login-container{display:block;}
+.login-left {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(26, 82, 196, 0.52) 0%, rgba(15, 23, 42, 0.62) 100%), url('../images/login-bg.png?v=1.0.4');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    color: #ffffff !important;
+}
+.login-left h1 { font-size: 2.6rem; color: #ffffff !important; margin-bottom: 12px; line-height: 1.2; text-align: center; font-weight: 700; }
+.login-left p { color: rgba(255, 255, 255, 0.9) !important; font-size: 1.25rem; max-width: 420px; text-align: center; }
+
+.login-right {
+    width: 560px;
+    background: #ffffff !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    color: #374151 !important;
+}
+.login-card {
+    width: 100%;
+    max-width: 380px;
+}
+.login-header { text-align: center; margin-bottom: 28px; }
+.login-header h4 { font-size: 1.5rem; color: #1A4FB5 !important; margin-bottom: 6px; font-weight: 700; }
+.login-header p { font-size: 0.9rem; color: #6B7280 !important; }
+
+/* Force light theme elements on the login form card */
+.login-right .form-label {
+    color: #1F2937 !important;
+}
+.login-right .form-control {
+    background: #ffffff !important;
+    color: #1F2937 !important;
+    border: 1.5px solid #D1D5DB !important;
+}
+.login-right .form-control:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.15) !important;
+}
+.login-right .input-group-text {
+    background: #F3F4F6 !important;
+    border: 1.5px solid #D1D5DB !important;
+    color: #4B5563 !important;
+}
+.login-right .input-group-text i {
+    color: #4B5563 !important;
+}
+.login-right .text-muted {
+    color: #6B7280 !important;
+}
+
+@media(max-width: 900px) {
+    .login-left { display: none; }
+    .login-right {
+        width: 100%;
+        min-height: 100vh;
+    }
 }
 
 /* ── AUDIT LOGS ── */

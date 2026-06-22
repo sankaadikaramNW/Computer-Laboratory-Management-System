@@ -20,6 +20,7 @@
             <select id="user-role-filter" class="form-select">
                 <option value="">All Roles</option>
                 <option value="1" <?php echo (isset($data['role_id']) && $data['role_id'] === 1) ? 'selected' : ''; ?>>Administrator</option>
+                <option value="3" <?php echo (isset($data['role_id']) && $data['role_id'] === 3) ? 'selected' : ''; ?>>Camp Administrator</option>
                 <option value="2" <?php echo (isset($data['role_id']) && $data['role_id'] === 2) ? 'selected' : ''; ?>>Instructor</option>
             </select>
         </div>
@@ -33,6 +34,7 @@
                     <th>User ID</th>
                     <th>Username</th>
                     <th>Role</th>
+                    <th>Camp Location</th>
                     <th>Status</th>
                     <th>Failed Attempts</th>
                     <th>Last Login</th>
@@ -53,11 +55,16 @@
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if((int)$user->role_id === 1): ?>
-                                    <span class="badge bg-primary-light text-primary" style="font-weight:600;"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>
-                                <?php else: ?>
-                                    <span class="badge bg-light text-secondary" style="font-weight:600;"><i class="bi bi-person-fill me-1"></i>Instructor</span>
-                                <?php endif; ?>
+                                 <?php if ((int)$user->role_id === 1): ?>
+                                     <span class="badge bg-primary-light text-primary" style="font-weight:600;"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>
+                                 <?php elseif ((int)$user->role_id === 3): ?>
+                                     <span class="badge bg-info-light text-info" style="font-weight:600;"><i class="bi bi-shield-fill me-1"></i>Camp Admin</span>
+                                 <?php else: ?>
+                                     <span class="badge bg-light text-secondary" style="font-weight:600;"><i class="bi bi-person-fill me-1"></i>Instructor</span>
+                                 <?php endif; ?>
+                            </td>
+                            <td>
+                                 <span class="fw-semibold text-secondary small"><i class="bi bi-geo-alt-fill me-1"></i><?php echo e($user->camp_name ?: 'Global'); ?></span>
                             </td>
                             <td>
                                 <?php if($user->status === 'active'): ?>
@@ -100,6 +107,7 @@
                                                data-id="<?php echo $user->id; ?>"
                                                data-username="<?php echo e($user->username); ?>"
                                                data-role="<?php echo $user->role_id; ?>"
+                                               data-camp="<?php echo $user->camp_id ?: ''; ?>"
                                                data-status="<?php echo $user->status; ?>"
                                                data-force="<?php echo $user->force_password_change; ?>"
                                                data-expiry="<?php echo $user->password_expiry_days; ?>"
@@ -176,7 +184,20 @@
                         <label for="create_role_id" class="form-label">Role</label>
                         <select name="role_id" id="create_role_id" class="form-select" required>
                             <option value="2">Instructor</option>
-                            <option value="1">Administrator</option>
+                            <option value="3">Camp Administrator</option>
+                            <option value="1">Administrator (HQ)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="create-camp-container">
+                        <label for="create_camp_id" class="form-label">Camp Location</label>
+                        <select name="camp_id" id="create_camp_id" class="form-select">
+                            <option value="">-- Select Camp Location --</option>
+                            <?php if (!empty($data['camps'])): ?>
+                                <?php foreach ($data['camps'] as $camp): ?>
+                                    <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                                <?php endforeach; ?>
+                             <?php endif; ?>
                         </select>
                     </div>
 
@@ -226,7 +247,20 @@
                         <label for="edit_role_id" class="form-label">Role</label>
                         <select name="role_id" id="edit_role_id" class="form-select" required>
                             <option value="2">Instructor</option>
-                            <option value="1">Administrator</option>
+                            <option value="3">Camp Administrator</option>
+                            <option value="1">Administrator (HQ)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="edit-camp-container">
+                        <label for="edit_camp_id" class="form-label">Camp Location</label>
+                        <select name="camp_id" id="edit_camp_id" class="form-select">
+                            <option value="">-- Select Camp Location --</option>
+                            <?php if (!empty($data['camps'])): ?>
+                                <?php foreach ($data['camps'] as $camp): ?>
+                                    <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                                 <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                     </div>
 
@@ -326,7 +360,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="export-history-pdf-btn" href="#" target="_blank" class="btn btn-primary btn-sm">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Export PDF Report
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -344,6 +381,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const id = this.getAttribute('data-id');
             const username = this.getAttribute('data-username');
             const role = this.getAttribute('data-role');
+            const camp = this.getAttribute('data-camp');
             const status = this.getAttribute('data-status');
             const force = this.getAttribute('data-force');
             const expiry = this.getAttribute('data-expiry');
@@ -351,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('edit-user-title').innerText = username;
             document.getElementById('editUserForm').action = '<?php echo URLROOT; ?>user/update/' + id;
             document.getElementById('edit_role_id').value = role;
+            document.getElementById('edit_camp_id').value = camp || '';
             document.getElementById('edit_status').value = status;
             document.getElementById('edit_expiry').value = expiry;
             document.getElementById('edit_force').checked = (parseInt(force) === 1);
@@ -386,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.history-user-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
+            document.getElementById('export-history-pdf-btn').href = '<?php echo URLROOT; ?>user/loginHistoryReport/' + id;
             const tbody = document.getElementById('history-table-body');
             
             tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>Loading logs...</td></tr>`;
@@ -444,9 +484,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         const isSelf = user.is_current_user;
                         const selfBadge = isSelf ? `<span class="badge bg-secondary ms-1">You</span>` : '';
                         
-                        const roleBadge = user.role_id === 1 
-                            ? `<span class="badge bg-primary-light text-primary" style="font-weight:600;"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>`
-                            : `<span class="badge bg-light text-secondary" style="font-weight:600;"><i class="bi bi-person-fill me-1"></i>Instructor</span>`;
+                        let roleBadge = '';
+                        if (user.role_id === 1) {
+                            roleBadge = `<span class="badge bg-primary-light text-primary" style="font-weight:600;"><i class="bi bi-shield-lock-fill me-1"></i>Admin</span>`;
+                        } else if (user.role_id === 3) {
+                            roleBadge = `<span class="badge bg-info-light text-info" style="font-weight:600;"><i class="bi bi-shield-fill me-1"></i>Camp Admin</span>`;
+                        } else {
+                            roleBadge = `<span class="badge bg-light text-secondary" style="font-weight:600;"><i class="bi bi-person-fill me-1"></i>Instructor</span>`;
+                        }
                         
                         let statusBadge = '';
                         if (user.status === 'active') {
@@ -490,6 +535,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     ${selfBadge}
                                 </td>
                                 <td>${roleBadge}</td>
+                                <td><span class="fw-semibold text-secondary small"><i class="bi bi-geo-alt-fill me-1"></i>${escapeHtml(user.camp_name)}</span></td>
                                 <td>${statusBadge}</td>
                                 <td class="text-center fw-bold ${failedAttemptsClass}">${user.failed_attempts}</td>
                                 <td><small class="text-muted">${user.last_login}</small></td>
@@ -511,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                                    data-id="${user.id}"
                                                    data-username="${escapeHtml(user.username)}"
                                                    data-role="${user.role_id}"
+                                                   data-camp="${user.camp_id || ''}"
                                                    data-status="${user.status}"
                                                    data-force="${user.force_password_change}"
                                                    data-expiry="${user.password_expiry_days}"
@@ -544,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     tbody.innerHTML = html;
                     rebindModalButtons();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No user accounts found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">No user accounts found.</td></tr>`;
                 }
             })
             .catch(err => {
@@ -562,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const id = this.getAttribute('data-id');
                 const username = this.getAttribute('data-username');
                 const role = this.getAttribute('data-role');
+                const camp = this.getAttribute('data-camp');
                 const status = this.getAttribute('data-status');
                 const force = this.getAttribute('data-force');
                 const expiry = this.getAttribute('data-expiry');
@@ -569,6 +617,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('edit-user-title').innerText = username;
                 document.getElementById('editUserForm').action = '<?php echo URLROOT; ?>user/update/' + id;
                 document.getElementById('edit_role_id').value = role;
+                document.getElementById('edit_camp_id').value = camp || '';
                 document.getElementById('edit_status').value = status;
                 document.getElementById('edit_expiry').value = expiry;
                 document.getElementById('edit_force').checked = (parseInt(force) === 1);
@@ -608,6 +657,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.history-user-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
+                document.getElementById('export-history-pdf-btn').href = '<?php echo URLROOT; ?>user/loginHistoryReport/' + id;
                 const tbodyHistory = document.getElementById('history-table-body');
                 
                 tbodyHistory.innerHTML = `<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm me-2" role="status"></div>Loading logs...</td></tr>`;

@@ -23,7 +23,12 @@ class RequestController extends Controller {
     public function index() {
         requireAdmin();
 
-        $requests = $this->requestModel->getAllRequests();
+        if (isSuperAdmin()) {
+            $requests = $this->requestModel->getAllRequests();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $requests = $this->requestModel->getAllRequests($campId);
+        }
         
         $data = [
             'title' => 'Manage Change Requests',
@@ -96,6 +101,14 @@ class RequestController extends Controller {
                 redirect('request/instructor');
             }
 
+            // Validate that reschedule request is not for a past date/time
+            if ($type === 'reschedule') {
+                if (strtotime($newDate . ' ' . $newStartTime) < time()) {
+                    flash('dashboard_error', 'Cannot request a reschedule to a past date or time.', 'alert alert-danger');
+                    redirect('request/instructor');
+                }
+            }
+
             $data = [
                 'allocation_id' => $allocationId,
                 'requester_id' => $_SESSION['user_id'],
@@ -135,6 +148,12 @@ class RequestController extends Controller {
             $req = $this->requestModel->getRequestById($id);
             if (!$req || $req->status !== 'pending') {
                 flash('dashboard_error', 'Invalid or already reviewed change request.', 'alert alert-danger');
+                redirect('request');
+            }
+
+            // Camp admin access isolation check
+            if (isCampAdmin() && (int)$req->camp_id !== (int)$_SESSION['camp_id']) {
+                flash('dashboard_error', 'Access denied. You can only review requests in your own camp.', 'alert alert-danger');
                 redirect('request');
             }
 

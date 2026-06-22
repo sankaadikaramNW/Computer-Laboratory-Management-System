@@ -9,7 +9,7 @@ class UserController extends Controller {
 
     public function __construct() {
         requireLogin();
-        requireAdmin();
+        requireSuperAdmin(); // Restrict user management to Super Administrators
         $this->userModel = $this->model('UserModel');
         $this->auditModel = $this->model('AuditModel');
     }
@@ -27,10 +27,14 @@ class UserController extends Controller {
             $users = $this->userModel->getAllUsers();
         }
 
+        $campModel = $this->model('CampModel');
+        $camps = $campModel->getActiveCamps();
+
         $data = [
             'title' => 'User Account Management',
             'active_menu' => 'user_management',
             'users' => $users,
+            'camps' => $camps,
             'q' => $q,
             'role_id' => $roleId
         ];
@@ -56,6 +60,7 @@ class UserController extends Controller {
             $status = $_POST['status'] ?? 'active';
             $forcePasswordChange = isset($_POST['force_password_change']) ? 1 : 0;
             $passwordExpiryDays = isset($_POST['password_expiry_days']) ? (int)$_POST['password_expiry_days'] : 90;
+            $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : null;
 
             // Simple validation
             if (empty($username) || empty($password)) {
@@ -69,9 +74,10 @@ class UserController extends Controller {
                 redirect('user');
             }
 
-            $userId = $this->userModel->createUser($username, $password, $roleId, $status, $forcePasswordChange, $passwordExpiryDays);
+            $userId = $this->userModel->createUser($username, $password, $roleId, $status, $forcePasswordChange, $passwordExpiryDays, $campId);
             if ($userId) {
-                $roleName = ($roleId === 1) ? 'Administrator' : 'Instructor';
+                $roleNames = [1 => 'Administrator', 2 => 'Instructor', 3 => 'Camp Administrator'];
+                $roleName = $roleNames[$roleId] ?? 'Unknown';
                 $this->logActivity('CREATE_USER', 'USERS', "Created new user account: '{$username}' with role '{$roleName}'");
                 flash('dashboard_success', 'User account created successfully.', 'alert alert-success');
             } else {
@@ -95,15 +101,17 @@ class UserController extends Controller {
             $status = $_POST['status'];
             $forcePasswordChange = isset($_POST['force_password_change']) ? 1 : 0;
             $passwordExpiryDays = (int)$_POST['password_expiry_days'];
+            $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : null;
 
             // Prevent changing own role/status if editing self
             if ((int)$id === (int)$_SESSION['user_id']) {
                 $currentUser = $this->userModel->getUserById($id);
                 $roleId = (int)$currentUser->role_id;
                 $status = $currentUser->status;
+                $campId = $currentUser->camp_id ? (int)$currentUser->camp_id : null;
             }
 
-            if ($this->userModel->updateUser($id, $roleId, $status, $forcePasswordChange, $passwordExpiryDays)) {
+            if ($this->userModel->updateUser($id, $roleId, $status, $forcePasswordChange, $passwordExpiryDays, $campId)) {
                 $user = $this->userModel->getUserById($id);
                 $this->logActivity('UPDATE_USER', 'USERS', "Updated user account '{$user->username}' (ID: {$id}) details.");
                 flash('dashboard_success', 'User account updated successfully.', 'alert alert-success');
@@ -209,9 +217,6 @@ class UserController extends Controller {
         }
     }
 
-    /**
-     * AJAX Instant Search Users
-     */
     public function search() {
         $q = isset($_GET['q']) ? trim($_GET['q']) : '';
         $roleId = isset($_GET['role_id']) && $_GET['role_id'] !== '' ? (int)$_GET['role_id'] : null;
@@ -227,6 +232,8 @@ class UserController extends Controller {
                 'role_name' => $user->role_name,
                 'role_id' => $user->role_id,
                 'status' => $user->status,
+                'camp_id' => $user->camp_id,
+                'camp_name' => $user->camp_name ?: 'Global',
                 'created_at' => date('d M Y', strtotime($user->created_at)),
                 'last_login' => $user->last_login ? date('d M Y H:i', strtotime($user->last_login)) : 'Never',
                 'last_password_change' => $user->last_password_change ? date('d M Y', strtotime($user->last_password_change)) : 'Never',
@@ -273,5 +280,26 @@ class UserController extends Controller {
             'username' => $user->username,
             'history' => $history
         ]);
+    }
+
+    /**
+     * Print-friendly login activity report for admin viewing a specific user
+     */
+    public function loginHistoryReport($id) {
+        $user = $this->userModel->getUserById($id);
+        if (!$user) {
+            die('User not found');
+        }
+
+        $logs = $this->auditModel->getUserLoginLogs($id, $user->username, 100);
+
+        $data = [
+            'title' => 'User Login Activity Audit Report',
+            'logs' => $logs,
+            'target_user' => $user->username,
+            'target_role' => $user->role_name
+        ];
+
+        $this->view('reports/login_activity_report', $data);
     }
 }

@@ -14,6 +14,7 @@
         <table class="table table-hover table-clms align-middle">
             <thead>
                 <tr>
+                    <th>Camp Location</th>
                     <th>Lab Code</th>
                     <th>Lesson / Syllabus</th>
                     <th>Instructor Assigned</th>
@@ -27,6 +28,7 @@
                 <?php if(!empty($data['allocations'])): ?>
                     <?php foreach($data['allocations'] as $a): ?>
                         <tr>
+                            <td><span class="badge bg-info-light text-info fw-semibold"><i class="bi bi-geo-alt-fill me-1"></i><?php echo e($a->camp_name ?: 'Global'); ?></span></td>
                             <td><span class="badge bg-secondary"><?php echo e($a->lab_code); ?> - <?php echo e($a->lab_name); ?></span></td>
                             <td>
                                 <div>
@@ -50,6 +52,7 @@
                                             data-start="<?php echo e($a->start_time); ?>"
                                             data-end="<?php echo e($a->end_time); ?>"
                                             data-remarks="<?php echo e($a->remarks); ?>"
+                                            data-camp="<?php echo $a->camp_id; ?>"
                                             data-bs-toggle="modal" data-bs-target="#editAllocationModal">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
@@ -63,7 +66,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">No scheduled allocations found in system.</td>
+                        <td colspan="8" class="text-center py-4 text-muted">No scheduled allocations found in system.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -84,11 +87,21 @@
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
 
                     <div class="mb-3">
+                        <label for="add_camp_id" class="form-label small fw-semibold">Camp Location</label>
+                        <select name="camp_id" id="add_camp_id" class="form-select form-control-clms camp-filter-select" data-target="#add_lab_id" required>
+                            <option value="">-- Choose Camp Location --</option>
+                            <?php foreach($data['camps'] as $camp): ?>
+                                <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="add_lab_id" class="form-label small fw-semibold">Select Laboratory</label>
                         <select name="lab_id" id="add_lab_id" class="form-select form-control-clms" required>
                             <option value="">-- Choose Lab Room --</option>
                             <?php foreach($data['labs'] as $l): ?>
-                                <option value="<?php echo $l->id; ?>"><?php echo e($l->lab_code); ?> - <?php echo e($l->lab_name); ?> (Cap: <?php echo $l->capacity; ?>)</option>
+                                <option value="<?php echo $l->id; ?>" data-camp="<?php echo $l->camp_id; ?>"><?php echo e($l->lab_code); ?> - <?php echo e($l->lab_name); ?> (Cap: <?php echo $l->capacity; ?>)</option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -164,10 +177,21 @@
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
 
                     <div class="mb-3">
+                        <label for="edit_camp_id" class="form-label small fw-semibold">Camp Location</label>
+                        <select name="camp_id" id="edit_camp_id" class="form-select form-control-clms camp-filter-select" data-target="#edit_lab_id" required>
+                            <option value="">-- Choose Camp Location --</option>
+                            <?php foreach($data['camps'] as $camp): ?>
+                                <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="edit_lab_id" class="form-label small fw-semibold">Select Laboratory</label>
                         <select name="lab_id" id="edit_lab_id" class="form-select form-control-clms" required>
+                            <option value="">-- Choose Lab Room --</option>
                             <?php foreach($data['labs'] as $l): ?>
-                                <option value="<?php echo $l->id; ?>"><?php echo e($l->lab_code); ?> - <?php echo e($l->lab_name); ?></option>
+                                <option value="<?php echo $l->id; ?>" data-camp="<?php echo $l->camp_id; ?>"><?php echo e($l->lab_code); ?> - <?php echo e($l->lab_name); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -230,6 +254,51 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Camp Filtering logic for Laboratories dropdown
+    const filterLabsByCamp = function(campSelect) {
+        const targetSelector = campSelect.getAttribute('data-target');
+        const labSelect = document.querySelector(targetSelector);
+        if (!labSelect) return;
+
+        const selectedCamp = campSelect.value;
+        let currentValueStillValid = false;
+
+        Array.from(labSelect.options).forEach(opt => {
+            const optCamp = opt.getAttribute('data-camp');
+            // Show placeholder option always
+            if (!optCamp) {
+                opt.style.display = '';
+                opt.disabled = false;
+                return;
+            }
+
+            if (!selectedCamp || optCamp == selectedCamp) {
+                opt.style.display = '';
+                opt.disabled = false;
+                if (opt.value == labSelect.value) {
+                    currentValueStillValid = true;
+                }
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        if (!currentValueStillValid) {
+            labSelect.value = '';
+        }
+    };
+
+    document.querySelectorAll('.camp-filter-select').forEach(select => {
+        select.addEventListener('change', function() {
+            filterLabsByCamp(this);
+        });
+        // Initial run to filter on page load if a camp is preselected
+        if (select.value) {
+            filterLabsByCamp(select);
+        }
+    });
+
     // Toggle inactive/archived options logic
     document.querySelectorAll('.toggle-inactive-instructors').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -243,7 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     opt.classList.add('d-none');
                     opt.style.display = 'none';
-                    // If currently selected, reset select value
                     if (opt.selected) {
                         modal.querySelector('select[name="instructor_id"]').value = "";
                     }
@@ -261,6 +329,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             editForm.action = '<?php echo URLROOT; ?>allocation/update/' + id;
             
+            // Set camp first and dispatch change event to filter laboratories
+            const campId = this.getAttribute('data-camp');
+            const campSelect = document.getElementById('edit_camp_id');
+            campSelect.value = campId;
+            filterLabsByCamp(campSelect);
+
             document.getElementById('edit_lab_id').value = this.getAttribute('data-labid');
             document.getElementById('edit_lesson_id').value = this.getAttribute('data-lessonid');
             

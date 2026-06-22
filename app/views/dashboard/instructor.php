@@ -38,42 +38,46 @@
 <!-- KPI Stats -->
 <div class="row g-3 mb-4">
     <div class="col-md-4 col-sm-6">
-        <div class="stats-card accent-green">
-            <div>
-                <p class="stats-label mb-1">Today's Sessions</p>
-                <h2 class="stats-count" style="color:var(--success);"><?php echo count($data['today_sessions']); ?></h2>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Allocated for today</small>
+        <a href="<?php echo URLROOT; ?>allocation/mySchedule" class="text-decoration-none d-block">
+            <div class="stats-card accent-green" style="cursor:pointer;">
+                <div>
+                    <p class="stats-label mb-1">Today's Sessions</p>
+                    <h2 class="stats-count" style="color:var(--success);"><?php echo count($data['today_sessions']); ?></h2>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Allocated for today</small>
+                </div>
+                <div class="stats-icon-wrapper icon-green">
+                    <i class="bi bi-calendar2-check-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-green">
-                <i class="bi bi-calendar2-check-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-4 col-sm-6">
         <a href="<?php echo URLROOT; ?>allocation/mySchedule" class="text-decoration-none d-block">
-        <div class="stats-card <?php echo count($data['pending_completion']) > 0 ? 'accent-yellow' : 'accent-blue'; ?>" style="cursor:pointer;">
-            <div>
-                <p class="stats-label mb-1">Pending Completion</p>
-                <h2 class="stats-count" style="color:<?php echo count($data['pending_completion']) > 0 ? 'var(--warning)' : 'var(--primary)'; ?>;"><?php echo count($data['pending_completion']); ?></h2>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Requires completion log</small>
+            <div class="stats-card <?php echo count($data['pending_completion']) > 0 ? 'accent-yellow' : 'accent-blue'; ?>" style="cursor:pointer;">
+                <div>
+                    <p class="stats-label mb-1">Pending Completion</p>
+                    <h2 class="stats-count" style="color:<?php echo count($data['pending_completion']) > 0 ? 'var(--warning)' : 'var(--primary)'; ?>;"><?php echo count($data['pending_completion']); ?></h2>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Requires completion log</small>
+                </div>
+                <div class="stats-icon-wrapper <?php echo count($data['pending_completion']) > 0 ? 'icon-yellow' : 'icon-blue'; ?>">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper <?php echo count($data['pending_completion']) > 0 ? 'icon-yellow' : 'icon-blue'; ?>">
-                <i class="bi bi-hourglass-split"></i>
-            </div>
-        </div>
         </a>
     </div>
     <div class="col-md-4 col-sm-12">
-        <div class="stats-card accent-blue">
-            <div>
-                <p class="stats-label mb-1">Upcoming Sessions</p>
-                <h2 class="stats-count"><?php echo count($data['upcoming_sessions']); ?></h2>
-                <small style="color:var(--text-muted);font-size:0.75rem;">Scheduled ahead</small>
+        <a href="<?php echo URLROOT; ?>allocation/calendar" class="text-decoration-none d-block">
+            <div class="stats-card accent-blue" style="cursor:pointer;">
+                <div>
+                    <p class="stats-label mb-1">Upcoming Sessions</p>
+                    <h2 class="stats-count"><?php echo count($data['upcoming_sessions']); ?></h2>
+                    <small style="color:var(--text-muted);font-size:0.75rem;">Scheduled ahead</small>
+                </div>
+                <div class="stats-icon-wrapper icon-blue">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
             </div>
-            <div class="stats-icon-wrapper icon-blue">
-                <i class="bi bi-calendar-event-fill"></i>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 

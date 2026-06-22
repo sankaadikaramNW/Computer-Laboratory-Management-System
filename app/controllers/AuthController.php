@@ -109,6 +109,8 @@ class AuthController extends Controller {
                 $_SESSION['user_role_id'] = (int)$user->role_id;
                 $_SESSION['user_role_name'] = $user->role_name;
                 $_SESSION['last_activity'] = time();
+                $_SESSION['camp_id'] = $user->camp_id ? (int)$user->camp_id : null;
+                $_SESSION['camp_name'] = $user->camp_name ?? null;
 
                 // Set password change flag in session if needed
                 if ($mustChangePassword) {
@@ -138,7 +140,7 @@ class AuthController extends Controller {
                 if ($mustChangePassword) {
                     flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
                     redirect('auth/changePassword');
-                } elseif ($user->role_id === 1) {
+                } elseif ($user->role_id === 1 || $user->role_id === 3) {
                     redirect('dashboard/admin');
                 } else {
                     redirect('dashboard/instructor');
@@ -341,5 +343,48 @@ class AuthController extends Controller {
         session_start();
         flash('login_success', 'You have been logged out successfully.', 'alert alert-success');
         redirect('auth/login');
+    }
+
+    /**
+     * Display logged-in user's own login activity history
+     */
+    public function myLoginActivity() {
+        if (!isLoggedIn()) {
+            redirect('auth/login');
+        }
+
+        $auditModel = $this->model('AuditModel');
+        $logs = $auditModel->getUserLoginLogs($_SESSION['user_id'], $_SESSION['username'], 100);
+
+        $data = [
+            'title' => 'My Login & Security Activity',
+            'active_menu' => 'my_login_activity',
+            'logs' => $logs
+        ];
+
+        $this->view('templates/header', $data);
+        $this->view('auth/my_login_activity', $data);
+        $this->view('templates/footer');
+    }
+
+    /**
+     * Print-friendly login activity report
+     */
+    public function myLoginActivityReport() {
+        if (!isLoggedIn()) {
+            redirect('auth/login');
+        }
+
+        $auditModel = $this->model('AuditModel');
+        $logs = $auditModel->getUserLoginLogs($_SESSION['user_id'], $_SESSION['username'], 100);
+
+        $data = [
+            'title' => 'My Login Activity Audit Report',
+            'logs' => $logs,
+            'target_user' => $_SESSION['username'],
+            'target_role' => $_SESSION['user_role_name']
+        ];
+
+        $this->view('reports/login_activity_report', $data);
     }
 }

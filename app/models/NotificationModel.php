@@ -47,9 +47,10 @@ class NotificationModel extends Model {
     /**
      * Mark notification as read
      */
-    public function markAsRead($id) {
-        $this->db->query("UPDATE notifications SET is_read = 1 WHERE id = :id");
+    public function markAsRead($id, $userId) {
+        $this->db->query("UPDATE notifications SET is_read = 1 WHERE id = :id AND user_id = :user_id");
         $this->db->bind(':id', $id);
+        $this->db->bind(':user_id', $userId);
         return $this->db->execute();
     }
 

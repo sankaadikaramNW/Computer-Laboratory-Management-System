@@ -7,11 +7,20 @@ class ComputerModel extends Model {
     /**
      * Get all computers with assigned laboratory code
      */
-    public function getAllComputers() {
-        $this->db->query("SELECT c.*, l.lab_name, l.lab_code 
-                          FROM computers c 
-                          LEFT JOIN laboratories l ON c.lab_id = l.id 
-                          ORDER BY c.asset_no ASC");
+    public function getAllComputers($campId = null) {
+        if ($campId) {
+            $this->db->query("SELECT c.*, l.lab_name, l.lab_code 
+                              FROM computers c 
+                              LEFT JOIN laboratories l ON c.lab_id = l.id 
+                              WHERE l.camp_id = :camp_id
+                              ORDER BY c.asset_no ASC");
+            $this->db->bind(':camp_id', $campId);
+        } else {
+            $this->db->query("SELECT c.*, l.lab_name, l.lab_code 
+                              FROM computers c 
+                              LEFT JOIN laboratories l ON c.lab_id = l.id 
+                              ORDER BY c.asset_no ASC");
+        }
         return $this->db->resultSet();
     }
 
@@ -19,7 +28,7 @@ class ComputerModel extends Model {
      * Get computer by ID
      */
     public function getComputerById($id) {
-        $this->db->query("SELECT c.*, l.lab_name, l.lab_code 
+        $this->db->query("SELECT c.*, l.lab_name, l.lab_code, l.camp_id 
                           FROM computers c 
                           LEFT JOIN laboratories l ON c.lab_id = l.id 
                           WHERE c.id = :id");
