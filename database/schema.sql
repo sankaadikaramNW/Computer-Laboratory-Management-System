@@ -26,7 +26,18 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 4. Users Table
+-- 4. Camps Table
+CREATE TABLE IF NOT EXISTS camps (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    address TEXT NULL,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 5. Users Table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -40,10 +51,12 @@ CREATE TABLE IF NOT EXISTS users (
     failed_attempts INT DEFAULT 0,
     force_password_change TINYINT(1) DEFAULT 0,
     password_expiry_days INT DEFAULT 90,
-    FOREIGN KEY (role_id) REFERENCES roles(id)
+    camp_id INT NULL,
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (camp_id) REFERENCES camps(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- 5. Login Attempts Table (Brute-force prevention)
+-- 6. Login Attempts Table (Brute-force prevention)
 CREATE TABLE IF NOT EXISTS login_attempts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ip_address VARCHAR(45) NOT NULL,
@@ -51,7 +64,7 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 6. Instructors Table
+-- 7. Instructors Table
 CREATE TABLE IF NOT EXISTS instructors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NULL UNIQUE,
@@ -69,7 +82,7 @@ CREATE TABLE IF NOT EXISTS instructors (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- 7. Laboratories Table
+-- 8. Laboratories Table
 CREATE TABLE IF NOT EXISTS laboratories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lab_code VARCHAR(20) NOT NULL UNIQUE,
@@ -79,10 +92,12 @@ CREATE TABLE IF NOT EXISTS laboratories (
     description TEXT,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    camp_id INT NULL,
+    FOREIGN KEY (camp_id) REFERENCES camps(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- 8. Computers Table
+-- 9. Computers Table
 CREATE TABLE IF NOT EXISTS computers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     asset_no VARCHAR(50) NOT NULL UNIQUE,
@@ -102,7 +117,7 @@ CREATE TABLE IF NOT EXISTS computers (
     FOREIGN KEY (lab_id) REFERENCES laboratories(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- 9. Smart Boards Table
+-- 10. Smart Boards Table
 CREATE TABLE IF NOT EXISTS smart_boards (
     id INT AUTO_INCREMENT PRIMARY KEY,
     asset_id VARCHAR(50) NOT NULL UNIQUE,
@@ -116,7 +131,7 @@ CREATE TABLE IF NOT EXISTS smart_boards (
     FOREIGN KEY (lab_id) REFERENCES laboratories(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- 10. Lessons Table
+-- 11. Lessons Table
 CREATE TABLE IF NOT EXISTS lessons (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lesson_code VARCHAR(20) NOT NULL UNIQUE,
@@ -128,7 +143,7 @@ CREATE TABLE IF NOT EXISTS lessons (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 11. Laboratory Allocations Table
+-- 12. Laboratory Allocations Table
 CREATE TABLE IF NOT EXISTS allocations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     instructor_id INT NOT NULL,
@@ -144,10 +159,12 @@ CREATE TABLE IF NOT EXISTS allocations (
     completed_by INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    camp_id INT NULL,
     FOREIGN KEY (instructor_id) REFERENCES instructors(id) ON DELETE CASCADE,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
     FOREIGN KEY (lab_id) REFERENCES laboratories(id) ON DELETE CASCADE,
-    FOREIGN KEY (completed_by) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (completed_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (camp_id) REFERENCES camps(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- 12. Allocation Requests (Change Requests) Table

@@ -34,11 +34,15 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 (2, 9),  -- submit_requests
 (2, 10); -- report_faults
 
+-- Seed Camps
+INSERT INTO camps (id, name, code, address, status) VALUES
+(1, 'SLAF Trade Training School Ekala', 'TTS-EKA', 'Ekala, Ja-Ela, Sri Lanka', 'active');
+
 -- Seed Default Admin User
 -- Username: admin
 -- Password: admin123 (hashed using bcrypt)
-INSERT INTO users (id, username, password, role_id, status) VALUES
-(1, 'admin', '$2y$10$5d7u2n2edWUnxvi2PN0dW.ZLa0F/BkHMC9zgHO7ZFoPba/6J0ykgm', 1, 'active');
+INSERT INTO users (id, username, password, role_id, status, camp_id) VALUES
+(1, 'admin', '$2y$10$5d7u2n2edWUnxvi2PN0dW.ZLa0F/BkHMC9zgHO7ZFoPba/6J0ykgm', 1, 'active', 1);
 
 -- Seed System Settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES
@@ -48,19 +52,19 @@ INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ('max_login_attempts', '5', 'Max failed login attempts before account locking');
 
 -- Seed Sample Laboratories
-INSERT INTO laboratories (lab_code, lab_name, location, capacity, description, status) VALUES
-('LAB-01', 'Primary Computing Laboratory', 'Main Block, Ground Floor', 30, 'Equipped with Core i5 desktops, projector, and high-speed network.', 'active'),
-('LAB-02', 'Advanced Networking Lab', 'Main Block, First Floor', 20, 'Equipped with Cisco routers, switches, and network simulation setups.', 'active'),
-('LAB-03', 'Hardware & Electronics Lab', 'Technical Hangar Block', 15, 'Equipped with logic design boards, soldering stations, and diagnostic PCs.', 'active');
+INSERT INTO laboratories (lab_code, lab_name, location, capacity, description, status, camp_id) VALUES
+('LAB-01', 'Primary Computing Laboratory', 'Main Block, Ground Floor', 30, 'Equipped with Core i5 desktops, projector, and high-speed network.', 'active', 1),
+('LAB-02', 'Advanced Networking Lab', 'Main Block, First Floor', 20, 'Equipped with Cisco routers, switches, and network simulation setups.', 'active', 1),
+('LAB-03', 'Hardware & Electronics Lab', 'Technical Hangar Block', 15, 'Equipped with logic design boards, soldering stations, and diagnostic PCs.', 'active', 1);
 
 -- Seed Sample Instructors (and their corresponding login accounts)
 -- Instructor 1: SGT Wijesinghe W.M. (username: sgt.wijesinghe / password: password123)
 -- Instructor 2: FG OFF Perera K.A. (username: fg.perera / password: password123)
 -- bcrypt hash for password123 is $2y$10$Kdb.f4Z1k7U4xH2J93bEueT4kP6B3S0t7vI1n1V7S0U1l2K8gM12S
 
-INSERT INTO users (id, username, password, role_id, status) VALUES
-(2, 'sgt.wijesinghe', '$2y$10$A7I71D6jZ2d6rHgcRQKQy.Hi8Ym1MvsZNjJKV9E9QHem01o4p1LU.', 2, 'active'),
-(3, 'fg.perera', '$2y$10$A7I71D6jZ2d6rHgcRQKQy.Hi8Ym1MvsZNjJKV9E9QHem01o4p1LU.', 2, 'active');
+INSERT INTO users (id, username, password, role_id, status, camp_id) VALUES
+(2, 'sgt.wijesinghe', '$2y$10$A7I71D6jZ2d6rHgcRQKQy.Hi8Ym1MvsZNjJKV9E9QHem01o4p1LU.', 2, 'active', 1),
+(3, 'fg.perera', '$2y$10$A7I71D6jZ2d6rHgcRQKQy.Hi8Ym1MvsZNjJKV9E9QHem01o4p1LU.', 2, 'active', 1);
 
 INSERT INTO instructors (user_id, service_no, rank, full_name, trade, contact_no, email, status) VALUES
 (2, 'S-12345', 'SGT', 'Wijesinghe W.M.', 'IT Specialist', '0771234567', 'sgt.wijesinghe@slaf.lk', 'active'),
