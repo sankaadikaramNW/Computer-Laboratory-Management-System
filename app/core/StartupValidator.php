@@ -50,6 +50,11 @@ class StartupValidator {
      * Run all startup checks
      */
     public static function run() {
+        // Check if the current request is for the login page
+        $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
+        $urlParts = explode('/', $url);
+        $isLoginRoute = empty($url) || (strtolower($urlParts[0]) === 'auth' && (empty($urlParts[1]) || strtolower($urlParts[1]) === 'login' || strtolower($urlParts[1]) === 'index'));
+
         // 1. Validate Basic Config
         if (!defined('DB_HOST') || !defined('DB_USER') || !defined('DB_NAME') || !defined('APPROOT')) {
             self::logError('Critical configuration constants are undefined.', 'CONFIG_MISMATCH');
@@ -104,8 +109,13 @@ class StartupValidator {
             foreach (self::$requiredSchema as $table => $columns) {
                 $tableLower = strtolower($table);
                 if (!in_array($tableLower, $existingTablesLower)) {
+                    $msg = "The database table '$table' is missing. Please run database migrations or import the initial schema.";
                     self::logError("Database table '$table' is missing.", 'DB_SCHEMA_MISMATCH');
-                    self::displayErrorPage('DB_SCHEMA_MISMATCH', "The database table '$table' is missing. Please run database migrations or import the initial schema.");
+                    if ($isLoginRoute) {
+                        flash('login_error', 'System Warning: ' . $msg, 'alert alert-warning');
+                        return;
+                    }
+                    self::displayErrorPage('DB_SCHEMA_MISMATCH', $msg);
                 }
 
                 // Table exists, find actual name in DB
@@ -119,14 +129,24 @@ class StartupValidator {
 
                 foreach ($columns as $column) {
                     if (!in_array(strtolower($column), $existingColsLower)) {
+                        $msg = "Required column '$column' in table '$table' is missing. The database schema is out of sync.";
                         self::logError("Column '$column' is missing in table '$table'.", 'DB_SCHEMA_MISMATCH');
-                        self::displayErrorPage('DB_SCHEMA_MISMATCH', "Required column '$column' in table '$table' is missing. The database schema is out of sync.");
+                        if ($isLoginRoute) {
+                            flash('login_error', 'System Warning: ' . $msg, 'alert alert-warning');
+                            return;
+                        }
+                        self::displayErrorPage('DB_SCHEMA_MISMATCH', $msg);
                     }
                 }
             }
         } catch (PDOException $e) {
+            $msg = "Could not connect to the database. Verify DB_HOST, DB_USER, DB_PASS, and DB_NAME settings.\nError details: " . $e->getMessage();
             self::logError("Database Connection Failed: " . $e->getMessage(), 'DB_CONNECTION_ERROR');
-            self::displayErrorPage('DB_CONNECTION_ERROR', "Could not connect to the database. Verify DB_HOST, DB_USER, DB_PASS, and DB_NAME settings.\nError details: " . $e->getMessage());
+            if ($isLoginRoute) {
+                flash('login_error', 'System Warning: Database connection failed. Verify host configuration.', 'alert alert-warning');
+                return;
+            }
+            self::displayErrorPage('DB_CONNECTION_ERROR', $msg);
         }
 
         // Store warnings in session for administrator visibility

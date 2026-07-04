@@ -31,130 +31,140 @@ class AuthController extends Controller {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Get client IP address
-            $ipAddress = '127.0.0.1';
-            if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-                $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
-            } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-            } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-                $ipAddress = $_SERVER['REMOTE_ADDR'];
-            }
-
-            // 1. Verify CSRF Token
-            if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
-                flash('login_error', 'Invalid security token. Please try again.', 'alert alert-danger');
-                $this->view('auth/login');
-                return;
-            }
-
-            // 2. Sanitize user inputs
-            $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-            $password = $_POST['password'] ?? '';
-            
-            // 3. Brute Force Check (Max 5 attempts in 10 minutes)
-            $attempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
-            
-            // Also check DB column failed_attempts
-            $dbUser = $this->userModel->findUserByUsername($username);
-            $dbFailedAttempts = $dbUser ? (int)$dbUser->failed_attempts : 0;
-            
-            if ($attempts >= 5 || $dbFailedAttempts >= 5) {
-                // Lock the account if it exists
-                if ($dbUser && $dbUser->status !== 'locked') {
-                    $this->userModel->lockUserAccount($dbUser->id);
-                    $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts from IP {$ipAddress}");
+            try {
+                // Get client IP address
+                $ipAddress = '127.0.0.1';
+                if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+                    $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
+                } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                    $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+                } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+                    $ipAddress = $_SERVER['REMOTE_ADDR'];
                 }
-                
-                flash('login_error', 'Account locked due to too many failed attempts. Contact Administrator.', 'alert alert-danger');
-                $this->view('auth/login');
-                return;
-            }
 
-            // 4. Authenticate
-            $user = $this->userModel->authenticate($username, $password);
-
-            if ($user) {
-                // Check if account status is active
-                if ($user->status === 'inactive') {
-                    flash('login_error', 'Your account has been deactivated.', 'alert alert-danger');
-                    $this->view('auth/login');
-                    return;
-                } elseif ($user->status === 'locked') {
-                    flash('login_error', 'Account is locked. Please contact Administrator.', 'alert alert-danger');
+                // 1. Verify CSRF Token
+                if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
+                    flash('login_error', 'Invalid security token. Please try again.', 'alert alert-danger');
                     $this->view('auth/login');
                     return;
                 }
 
-                // Check password expiry
-                $passwordExpired = false;
-                if ($user->last_password_change && $user->password_expiry_days > 0) {
-                    $lastChange = strtotime($user->last_password_change);
-                    $expiryDays = (int)$user->password_expiry_days;
-                    if (time() > $lastChange + ($expiryDays * 24 * 60 * 60)) {
-                        $passwordExpired = true;
-                    }
-                }
-
-                // Check force password change requirement
-                $mustChangePassword = ((int)$user->force_password_change === 1) || $passwordExpired;
-
-                // Successful login -> Clear login attempts log and reset failed attempts column
-                $this->userModel->clearLoginAttempts($ipAddress, $username);
-                $this->userModel->resetFailedAttempts($username);
-
-                // Set session variables
-                $_SESSION['user_id'] = $user->id;
-                $_SESSION['username'] = $user->username;
-                $_SESSION['user_role_id'] = (int)$user->role_id;
-                $_SESSION['user_role_name'] = $user->role_name;
-                $_SESSION['last_activity'] = time();
-
-                // Set password change flag in session if needed
-                if ($mustChangePassword) {
-                    $_SESSION['must_change_password'] = true;
-                }
-
-                // Load Instructor details if role is Instructor
-                if ($user->role_id === 2) {
-                    $instructorModel = $this->model('InstructorModel');
-                    $instructor = $instructorModel->getInstructorByUserId($user->id);
-                    if ($instructor) {
-                        $_SESSION['instructor_id'] = $instructor->id;
-                        $_SESSION['instructor_name'] = $instructor->full_name;
-                        $_SESSION['instructor_rank'] = $instructor->rank;
-                        $_SESSION['instructor_service_no'] = $instructor->service_no;
-                        $_SESSION['instructor_photo'] = $instructor->profile_photo;
-                    }
-                }
-
-                // Update last login timestamp
-                $this->userModel->updateLastLogin($user->id);
-
-                // Log Activity
-                $this->logActivity('LOGIN', 'AUTH', "User '{$username}' logged in successfully.");
-
-                // Redirect based on role and security status
-                if ($mustChangePassword) {
-                    flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
-                    redirect('auth/changePassword');
-                } elseif ($user->role_id === 1) {
-                    redirect('dashboard/admin');
-                } else {
-                    redirect('dashboard/instructor');
-                }
-            } else {
-                // Failed login -> Track attempt
-                $this->userModel->trackLoginAttempt($ipAddress, $username);
-                $isNowLocked = $this->userModel->incrementFailedAttempts($username);
+                // 2. Sanitize user inputs
+                $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $password = $_POST['password'] ?? '';
                 
-                $currentAttempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
-                if ($isNowLocked) {
-                    $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts.");
+                // 3. Brute Force Check (Max 5 attempts in 10 minutes)
+                $attempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
+                
+                // Also check DB column failed_attempts
+                $dbUser = $this->userModel->findUserByUsername($username);
+                $dbFailedAttempts = $dbUser ? (int)$dbUser->failed_attempts : 0;
+                
+                if ($attempts >= 5 || $dbFailedAttempts >= 5) {
+                    // Lock the account if it exists
+                    if ($dbUser && $dbUser->status !== 'locked') {
+                        $this->userModel->lockUserAccount($dbUser->id);
+                        $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts from IP {$ipAddress}");
+                    }
+                    
                     flash('login_error', 'Account locked due to too many failed attempts. Contact Administrator.', 'alert alert-danger');
-                } else {
-                    flash('login_error', 'Invalid username or password. Remaining attempts: ' . (5 - $currentAttempts), 'alert alert-danger');
+                    $this->view('auth/login');
+                    return;
                 }
+
+                // 4. Authenticate
+                $user = $this->userModel->authenticate($username, $password);
+
+                if ($user) {
+                    // Check if account status is active
+                    if ($user->status === 'inactive') {
+                        flash('login_error', 'Your account has been deactivated.', 'alert alert-danger');
+                        $this->view('auth/login');
+                        return;
+                    } elseif ($user->status === 'locked') {
+                        flash('login_error', 'Account is locked. Please contact Administrator.', 'alert alert-danger');
+                        $this->view('auth/login');
+                        return;
+                    }
+
+                    // Check password expiry
+                    $passwordExpired = false;
+                    if ($user->last_password_change && $user->password_expiry_days > 0) {
+                        $lastChange = strtotime($user->last_password_change);
+                        $expiryDays = (int)$user->password_expiry_days;
+                        if (time() > $lastChange + ($expiryDays * 24 * 60 * 60)) {
+                            $passwordExpired = true;
+                        }
+                    }
+
+                    // Check force password change requirement
+                    $mustChangePassword = ((int)$user->force_password_change === 1) || $passwordExpired;
+
+                    // Successful login -> Clear login attempts log and reset failed attempts column
+                    $this->userModel->clearLoginAttempts($ipAddress, $username);
+                    $this->userModel->resetFailedAttempts($username);
+
+                    // Set session variables
+                    $_SESSION['user_id'] = $user->id;
+                    $_SESSION['username'] = $user->username;
+                    $_SESSION['user_role_id'] = (int)$user->role_id;
+                    $_SESSION['user_role_name'] = $user->role_name;
+                    $_SESSION['last_activity'] = time();
+
+                    // Set password change flag in session if needed
+                    if ($mustChangePassword) {
+                        $_SESSION['must_change_password'] = true;
+                    }
+
+                    // Load Instructor details if role is Instructor
+                    if ($user->role_id === 2) {
+                        $instructorModel = $this->model('InstructorModel');
+                        $instructor = $instructorModel->getInstructorByUserId($user->id);
+                        if ($instructor) {
+                            $_SESSION['instructor_id'] = $instructor->id;
+                            $_SESSION['instructor_name'] = $instructor->full_name;
+                            $_SESSION['instructor_rank'] = $instructor->rank;
+                            $_SESSION['instructor_service_no'] = $instructor->service_no;
+                            $_SESSION['instructor_photo'] = $instructor->profile_photo;
+                        }
+                    }
+
+                    // Update last login timestamp
+                    $this->userModel->updateLastLogin($user->id);
+
+                    // Log Activity
+                    $this->logActivity('LOGIN', 'AUTH', "User '{$username}' logged in successfully.");
+
+                    // Redirect based on role and security status
+                    if ($mustChangePassword) {
+                        flash('change_password_warning', 'Security policy requires you to change your password.', 'alert alert-warning alert-dismissible fade show');
+                        redirect('auth/changePassword');
+                    } elseif ($user->role_id === 1) {
+                        redirect('dashboard/admin');
+                    } else {
+                        redirect('dashboard/instructor');
+                    }
+                } else {
+                    // Failed login -> Track attempt
+                    $this->userModel->trackLoginAttempt($ipAddress, $username);
+                    $isNowLocked = $this->userModel->incrementFailedAttempts($username);
+                    
+                    $currentAttempts = $this->userModel->getLoginAttemptsCount($ipAddress, $username);
+                    if ($isNowLocked) {
+                        $this->logActivity('ACCOUNT_LOCKED', 'USERS', "User account {$username} locked due to too many failed attempts.");
+                        flash('login_error', 'Account locked due to too many failed attempts. Contact Administrator.', 'alert alert-danger');
+                    } else {
+                        flash('login_error', 'Invalid username or password. Remaining attempts: ' . (5 - $currentAttempts), 'alert alert-danger');
+                    }
+                    $this->view('auth/login');
+                }
+            } catch (Exception $e) {
+                if (class_exists('StartupValidator')) {
+                    StartupValidator::logError("Database error during login POST: " . $e->getMessage(), 'AUTH_POST_ERROR');
+                } else {
+                    error_log($e->getMessage());
+                }
+                flash('login_error', 'Database connection error. Please verify the database is active and schema is imported.', 'alert alert-danger');
                 $this->view('auth/login');
             }
         } else {

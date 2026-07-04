@@ -13,21 +13,30 @@ class Database {
     private $stmt;
     private $error;
 
+    private $dsn;
+    private $options;
+
     public function __construct() {
-        // Set DSN
-        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname . ';charset=utf8mb4';
-        $options = [
+        // Set DSN and options for lazy connection
+        $this->dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname . ';charset=utf8mb4';
+        $this->options = [
             PDO::ATTR_PERSISTENT => false, // Persistent connections not supported on shared hosts (InfinityFree)
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
         ];
+    }
 
-        // Create PDO instance
-        try {
-            $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
-        } catch (PDOException $e) {
-            $this->error = $e->getMessage();
-            throw $e;
+    /**
+     * Establish database connection lazily
+     */
+    private function connect() {
+        if ($this->dbh === null) {
+            try {
+                $this->dbh = new PDO($this->dsn, $this->user, $this->pass, $this->options);
+            } catch (PDOException $e) {
+                $this->error = $e->getMessage();
+                throw $e;
+            }
         }
     }
 
@@ -35,6 +44,7 @@ class Database {
      * Prepare statement with SQL query
      */
     public function query($sql) {
+        $this->connect();
         $this->stmt = $this->dbh->prepare($sql);
     }
 
@@ -94,6 +104,7 @@ class Database {
      * Get the ID of the last inserted row
      */
     public function lastInsertId() {
+        $this->connect();
         return $this->dbh->lastInsertId();
     }
 }

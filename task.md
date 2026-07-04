@@ -1,0 +1,9 @@
+- [x] Create `.env` file in the root directory
+- [x] Create `.env.example` file in the root directory
+- [x] Modify `.gitignore` to ignore `.env`
+- [x] Modify `.htaccess` to block direct web access to `.env`
+- [x] Modify `app/config/config.php` to parse and load environment variables
+- [x] Modify `app/core/Database.php` to make connection lazy
+- [x] Modify `app/core/StartupValidator.php` to handle DB errors gracefully on login page
+- [x] Modify `app/controllers/AuthController.php` to handle DB connection failure on login submit
+- [x] Verify implementation by testing local connection and testing simulated failure states
