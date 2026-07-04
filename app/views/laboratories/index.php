@@ -13,6 +13,7 @@
                 <tr>
                     <th>Lab Code</th>
                     <th>Lab Name</th>
+                    <th>Camp Location</th>
                     <th>Location</th>
                     <th>Seating Capacity</th>
                     <th>Description</th>
@@ -26,6 +27,7 @@
                         <tr>
                             <td><span class="fw-bold text-primary"><?php echo e($l->lab_code); ?></span></td>
                             <td><span class="fw-semibold"><?php echo e($l->lab_name); ?></span></td>
+                            <td><span class="badge bg-info-light text-info fw-semibold"><i class="bi bi-geo-alt-fill me-1"></i><?php echo e($l->camp_name ?: 'Global'); ?></span></td>
                             <td><?php echo e($l->location); ?></td>
                             <td><span class="badge bg-secondary px-2 py-1"><?php echo e($l->capacity); ?> Workstations</span></td>
                             <td><small class="text-muted"><?php echo e($l->description ?: 'No description'); ?></small></td>
@@ -46,6 +48,7 @@
                                             data-capacity="<?php echo $l->capacity; ?>"
                                             data-desc="<?php echo e($l->description); ?>"
                                             data-status="<?php echo e($l->status); ?>"
+                                            data-camp="<?php echo $l->camp_id; ?>"
                                             data-bs-toggle="modal" data-bs-target="#editLabModal">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
@@ -58,7 +61,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">No laboratories configured yet.</td>
+                        <td colspan="8" class="text-center py-4 text-muted">No laboratories configured yet.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -77,6 +80,15 @@
             <form action="<?php echo URLROOT; ?>laboratory/create" method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
+
+                    <div class="mb-3">
+                        <label for="add_camp_id" class="form-label small fw-semibold">Camp Location</label>
+                        <select name="camp_id" id="add_camp_id" class="form-select form-control-clms" required>
+                            <?php foreach($data['camps'] as $camp): ?>
+                                <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
                     <div class="mb-3">
                         <label for="add_lab_code" class="form-label small fw-semibold">Lab Code</label>
@@ -133,6 +145,15 @@
                     <input type="hidden" name="csrf_token" value="<?php echo generateCsrfToken(); ?>">
 
                     <div class="mb-3">
+                        <label for="edit_camp_id" class="form-label small fw-semibold">Camp Location</label>
+                        <select name="camp_id" id="edit_camp_id" class="form-select form-control-clms" required>
+                            <?php foreach($data['camps'] as $camp): ?>
+                                <option value="<?php echo $camp->id; ?>"><?php echo e($camp->name); ?> (<?php echo e($camp->code); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="edit_lab_code" class="form-label small fw-semibold">Lab Code</label>
                         <input type="text" name="lab_code" id="edit_lab_code" class="form-control form-control-clms" required>
                     </div>
@@ -184,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = this.getAttribute('data-id');
             editForm.action = '<?php echo URLROOT; ?>laboratory/update/' + id;
             
+            document.getElementById('edit_camp_id').value = this.getAttribute('data-camp');
             document.getElementById('edit_lab_code').value = this.getAttribute('data-code');
             document.getElementById('edit_lab_name').value = this.getAttribute('data-name');
             document.getElementById('edit_location').value = this.getAttribute('data-location');

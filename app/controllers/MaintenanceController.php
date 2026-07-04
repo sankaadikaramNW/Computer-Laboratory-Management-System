@@ -21,9 +21,16 @@ class MaintenanceController extends Controller {
     public function index() {
         requireAdmin();
 
-        $records = $this->maintModel->getAllRecords();
-        $computers = $this->computerModel->getAllComputers();
-        $smartboards = $this->smartBoardModel->getAllSmartBoards();
+        if (isSuperAdmin()) {
+            $records = $this->maintModel->getAllRecords();
+            $computers = $this->computerModel->getAllComputers();
+            $smartboards = $this->smartBoardModel->getAllSmartBoards();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $records = $this->maintModel->getAllRecords($campId);
+            $computers = $this->computerModel->getAllComputers($campId);
+            $smartboards = $this->smartBoardModel->getAllSmartBoards($campId);
+        }
 
         $data = [
             'title' => 'Servicing & preventative logs',
@@ -57,6 +64,19 @@ class MaintenanceController extends Controller {
             $repairDate = trim($_POST['repair_date']);
             $status = trim($_POST['status']); // scheduled, in_progress, completed
             $notes = trim($_POST['notes']);
+
+            // Verify equipment camp ID if camp admin
+            if ($equipmentId && isCampAdmin()) {
+                if ($equipmentType === 'computer') {
+                    $equip = $this->computerModel->getComputerById($equipmentId);
+                } else {
+                    $equip = $this->smartBoardModel->getSmartBoardById($equipmentId);
+                }
+                if (!$equip || (int)$equip->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only log maintenance for equipment in your own camp.', 'alert alert-danger');
+                    redirect('maintenance');
+                }
+            }
 
             $data = [
                 'equipment_type' => $equipmentType,
@@ -100,6 +120,18 @@ class MaintenanceController extends Controller {
     public function update($id) {
         requireAdmin();
 
+        $record = $this->maintModel->getRecordById($id);
+        if (!$record) {
+            flash('dashboard_error', 'Servicing record not found.', 'alert alert-danger');
+            redirect('maintenance');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $record->camp_id !== null && (int)$record->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only update servicing records in your own camp.', 'alert alert-danger');
+            redirect('maintenance');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
@@ -113,6 +145,19 @@ class MaintenanceController extends Controller {
             $repairDate = trim($_POST['repair_date']);
             $status = trim($_POST['status']);
             $notes = trim($_POST['notes']);
+
+            // Verify equipment camp ID if camp admin
+            if ($equipmentId && isCampAdmin()) {
+                if ($equipmentType === 'computer') {
+                    $equip = $this->computerModel->getComputerById($equipmentId);
+                } else {
+                    $equip = $this->smartBoardModel->getSmartBoardById($equipmentId);
+                }
+                if (!$equip || (int)$equip->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only assign equipment in your own camp.', 'alert alert-danger');
+                    redirect('maintenance');
+                }
+            }
 
             $data = [
                 'equipment_type' => $equipmentType,
@@ -157,13 +202,22 @@ class MaintenanceController extends Controller {
         requireAdmin();
 
         $record = $this->maintModel->getRecordById($id);
-        if ($record) {
-            if ($this->maintModel->deleteRecord($id)) {
-                $this->logActivity('DELETE_MAINTENANCE', 'MAINTENANCE', "Deleted servicing log ID: {$id}");
-                flash('dashboard_success', 'Servicing record deleted successfully.', 'alert alert-success');
-            } else {
-                flash('dashboard_error', 'Failed to delete servicing record.', 'alert alert-danger');
-            }
+        if (!$record) {
+            flash('dashboard_error', 'Servicing record not found.', 'alert alert-danger');
+            redirect('maintenance');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $record->camp_id !== null && (int)$record->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only delete servicing records in your own camp.', 'alert alert-danger');
+            redirect('maintenance');
+        }
+
+        if ($this->maintModel->deleteRecord($id)) {
+            $this->logActivity('DELETE_MAINTENANCE', 'MAINTENANCE', "Deleted servicing log ID: {$id}");
+            flash('dashboard_success', 'Servicing record deleted successfully.', 'alert alert-success');
+        } else {
+            flash('dashboard_error', 'Failed to delete servicing record.', 'alert alert-danger');
         }
         redirect('maintenance');
     }

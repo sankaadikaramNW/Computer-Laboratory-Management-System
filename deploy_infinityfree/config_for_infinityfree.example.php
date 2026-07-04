@@ -12,7 +12,7 @@
 define('DB_HOST', 'sqlXXX.infinityfree.com');   // e.g., sql108.infinityfree.com
 define('DB_USER', 'epXXXXXX_username');          // e.g., if0_12345678
 define('DB_PASS', 'your_database_password');      // your MySQL password
-define('DB_NAME', 'epXXXXXX_dbname');            // e.g., if0_12345678_slaf_clms
+define('DB_NAME', 'epXXXXXX_dbname');            // e.g., if0_12345678_itwekala_slaf_clms
 
 // App Root — resolves to htdocs/app/ when config.php is at htdocs/app/config/config.php
 define('APPROOT', dirname(dirname(__FILE__)));

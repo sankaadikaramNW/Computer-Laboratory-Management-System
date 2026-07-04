@@ -23,7 +23,12 @@ class FaultController extends Controller {
     public function index() {
         requireAdmin();
 
-        $faults = $this->faultModel->getAllFaults();
+        if (isSuperAdmin()) {
+            $faults = $this->faultModel->getAllFaults();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $faults = $this->faultModel->getAllFaults($campId);
+        }
         
         $data = [
             'title' => 'Fault Ticket Registry',
@@ -122,6 +127,12 @@ class FaultController extends Controller {
             $ticket = $this->faultModel->getFaultById($id);
             if (!$ticket) {
                 flash('dashboard_error', 'Fault ticket not found.', 'alert alert-danger');
+                redirect('fault');
+            }
+
+            // Camp admin access isolation check
+            if (isCampAdmin() && $ticket->camp_id !== null && (int)$ticket->camp_id !== (int)$_SESSION['camp_id']) {
+                flash('dashboard_error', 'Access denied. You can only review fault tickets in your own camp.', 'alert alert-danger');
                 redirect('fault');
             }
 

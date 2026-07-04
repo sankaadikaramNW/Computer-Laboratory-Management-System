@@ -23,9 +23,19 @@ class AllocationController extends Controller {
     public function schedule() {
         requireAdmin();
 
-        $allocations = $this->allocModel->getAllAllocations();
+        $campModel = $this->model('CampModel');
+        if (isSuperAdmin()) {
+            $allocations = $this->allocModel->getAllAllocations();
+            $camps = $campModel->getActiveCamps();
+            $labs = $this->labModel->getActiveLabs();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $allocations = $this->allocModel->getAllAllocations($campId);
+            $camps = [$campModel->getCampById($campId)];
+            $labs = $this->labModel->getActiveLabs($campId);
+        }
+
         $instructors = $this->instructorModel->getAllInstructors(true);
-        $labs = $this->labModel->getActiveLabs();
         $lessons = $this->lessonModel->getAllLessons();
 
         $data = [
@@ -34,7 +44,8 @@ class AllocationController extends Controller {
             'allocations' => $allocations,
             'instructors' => $instructors,
             'labs' => $labs,
-            'lessons' => $lessons
+            'lessons' => $lessons,
+            'camps' => $camps
         ];
 
         $this->view('templates/header', $data);
@@ -46,9 +57,18 @@ class AllocationController extends Controller {
      * Interactive Calendar dashboard
      */
     public function calendar() {
-        // Accessible by both admin and instructors
         $instructors = $this->instructorModel->getAllInstructors(true);
-        $labs = $this->labModel->getActiveLabs();
+        $campModel = $this->model('CampModel');
+        
+        if (isSuperAdmin()) {
+            $labs = $this->labModel->getActiveLabs();
+            $camps = $campModel->getActiveCamps();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $labs = $this->labModel->getActiveLabs($campId);
+            $camps = [$campModel->getCampById($campId)];
+        }
+        
         $lessons = $this->lessonModel->getAllLessons();
 
         $data = [
@@ -56,7 +76,8 @@ class AllocationController extends Controller {
             'active_menu' => 'calendar',
             'instructors' => $instructors,
             'labs' => $labs,
-            'lessons' => $lessons
+            'lessons' => $lessons,
+            'camps' => $camps
         ];
 
         $this->view('templates/header', $data);
@@ -84,9 +105,28 @@ class AllocationController extends Controller {
             $endTime = trim($_POST['end_time']);
             $remarks = trim($_POST['remarks']);
 
+            if (isSuperAdmin()) {
+                $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : 5;
+            } else {
+                $campId = (int)$_SESSION['camp_id'];
+            }
+
+            // Validate lab existence and camp location match
+            $lab = $this->labModel->getLabById($labId);
+            if (!$lab || (int)$lab->camp_id !== $campId) {
+                flash('dashboard_error', 'Invalid laboratory or laboratory does not belong to the selected camp.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
             // 1. Validate inputs time logic
             if (strtotime($startTime) >= strtotime($endTime)) {
                 flash('dashboard_error', 'Start time must be before end time.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
+            // Prevent past date or time allocations
+            if (strtotime($date . ' ' . $startTime) < time()) {
+                flash('dashboard_error', 'Cannot allocate lab for a past date or time.', 'alert alert-danger');
                 redirect('allocation/schedule');
             }
 
@@ -109,14 +149,14 @@ class AllocationController extends Controller {
                 'date' => $date,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
-                'remarks' => $remarks
+                'remarks' => $remarks,
+                'camp_id' => $campId
             ];
 
             $allocId = $this->allocModel->createAllocation($data);
             if ($allocId) {
                 // Send notification to instructor
                 $inst = $this->instructorModel->getInstructorById($instructorId);
-                $lab = $this->labModel->getLabById($labId);
                 $lesson = $this->lessonModel->getLessonById($lessonId);
                 
                 if ($inst && $inst->user_id) {
@@ -140,6 +180,18 @@ class AllocationController extends Controller {
     public function update($id) {
         requireAdmin();
 
+        $alloc = $this->allocModel->getAllocationById($id);
+        if (!$alloc) {
+            flash('dashboard_error', 'Allocation not found.', 'alert alert-danger');
+            redirect('allocation/schedule');
+        }
+
+        // Access control check
+        if (isCampAdmin() && (int)$alloc->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only update allocations in your own camp.', 'alert alert-danger');
+            redirect('allocation/schedule');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
@@ -154,8 +206,27 @@ class AllocationController extends Controller {
             $endTime = trim($_POST['end_time']);
             $remarks = trim($_POST['remarks']);
 
+            if (isSuperAdmin()) {
+                $campId = isset($_POST['camp_id']) && $_POST['camp_id'] !== '' ? (int)$_POST['camp_id'] : 5;
+            } else {
+                $campId = (int)$_SESSION['camp_id'];
+            }
+
+            // Validate laboratory belongs to selected camp
+            $lab = $this->labModel->getLabById($labId);
+            if (!$lab || (int)$lab->camp_id !== $campId) {
+                flash('dashboard_error', 'Invalid laboratory or laboratory does not belong to the selected camp.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
             if (strtotime($startTime) >= strtotime($endTime)) {
                 flash('dashboard_error', 'Start time must be before end time.', 'alert alert-danger');
+                redirect('allocation/schedule');
+            }
+
+            // Prevent past date or time allocations
+            if (strtotime($date . ' ' . $startTime) < time()) {
+                flash('dashboard_error', 'Cannot allocate lab for a past date or time.', 'alert alert-danger');
                 redirect('allocation/schedule');
             }
 
@@ -178,13 +249,13 @@ class AllocationController extends Controller {
                 'date' => $date,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
-                'remarks' => $remarks
+                'remarks' => $remarks,
+                'camp_id' => $campId
             ];
 
             if ($this->allocModel->updateAllocation($id, $data)) {
                 // Notify instructor
                 $inst = $this->instructorModel->getInstructorById($instructorId);
-                $lab = $this->labModel->getLabById($labId);
                 
                 if ($inst && $inst->user_id) {
                     $notifModel = $this->model('NotificationModel');
@@ -208,20 +279,29 @@ class AllocationController extends Controller {
         requireAdmin();
 
         $alloc = $this->allocModel->getAllocationById($id);
-        if ($alloc) {
-            if ($this->allocModel->deleteAllocation($id)) {
-                // Notify instructor of cancellation
-                if ($alloc->instructor_user_id) {
-                    $notifModel = $this->model('NotificationModel');
-                    $msg = "Schedule Cancelled: Your booking for '{$alloc->lesson_code}' in laboratory '{$alloc->lab_code}' on " . date('d M Y', strtotime($alloc->date)) . " has been cancelled.";
-                    $notifModel->createNotification($alloc->instructor_user_id, $msg, 'cancellation');
-                }
+        if (!$alloc) {
+            flash('dashboard_error', 'Allocation not found.', 'alert alert-danger');
+            redirect('allocation/schedule');
+        }
 
-                $this->logActivity('DELETE_ALLOCATION', 'ALLOCATIONS', "Cancelled allocation: {$alloc->lesson_code} in {$alloc->lab_code} on {$alloc->date}");
-                flash('dashboard_success', 'Allocation booking cancelled successfully.', 'alert alert-success');
-            } else {
-                flash('dashboard_error', 'Failed to cancel allocation.', 'alert alert-danger');
+        // Access control check
+        if (isCampAdmin() && (int)$alloc->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only cancel allocations in your own camp.', 'alert alert-danger');
+            redirect('allocation/schedule');
+        }
+
+        if ($this->allocModel->deleteAllocation($id)) {
+            // Notify instructor of cancellation
+            if ($alloc->instructor_user_id) {
+                $notifModel = $this->model('NotificationModel');
+                $msg = "Schedule Cancelled: Your booking for '{$alloc->lesson_code}' in laboratory '{$alloc->lab_code}' on " . date('d M Y', strtotime($alloc->date)) . " has been cancelled.";
+                $notifModel->createNotification($alloc->instructor_user_id, $msg, 'cancellation');
             }
+
+            $this->logActivity('DELETE_ALLOCATION', 'ALLOCATIONS', "Cancelled allocation: {$alloc->lesson_code} in {$alloc->lab_code} on {$alloc->date}");
+            flash('dashboard_success', 'Allocation booking cancelled successfully.', 'alert alert-success');
+        } else {
+            flash('dashboard_error', 'Failed to cancel allocation.', 'alert alert-danger');
         }
         redirect('allocation/schedule');
     }
@@ -242,21 +322,48 @@ class AllocationController extends Controller {
         $startDate = date('Y-m-d', strtotime($start));
         $endDate = date('Y-m-d', strtotime($end));
 
-        $allocations = $this->allocModel->getAllocationsByDateRange($startDate, $endDate);
+        // Get camp parameter if provided/instructed
+        $campId = filter_input(INPUT_GET, 'camp_id', FILTER_VALIDATE_INT);
+        if (!$campId && isCampAdmin()) {
+            $campId = $_SESSION['camp_id'];
+        }
+
+        $allocations = $this->allocModel->getAllocationsByDateRange($startDate, $endDate, $campId ?: null);
         
         $events = [];
         // Map beautiful military hues to labs dynamically
         $colors = [
             '1' => '#1d3557', // Dark navy blue
             '2' => '#457b9d', // Air force steel blue
-            '3' => '#2a9d8f', // Teal
-            '4' => '#7209b7', // Purple
+            '3' => '#0077b6', // Cyan blue
+            '4' => '#5c677d', // Grey slate
             '5' => '#c1121f', // Red
             '6' => '#d4a373'  // Tan
         ];
 
         foreach ($allocations as $a) {
-            $color = $colors[$a->lab_id] ?? '#457b9d';
+            $isSpecial = false;
+            if (stripos($a->lesson_name, 'special') !== false || 
+                stripos($a->lesson_name, 'training') !== false || 
+                stripos($a->lesson_name, 'course') !== false || 
+                stripos($a->lesson_name, 'slaf') !== false) {
+                $isSpecial = true;
+            }
+
+            // Assign color based on event type
+            if ($a->session_status === 'Completed' || $a->session_status === 'Completed Successfully') {
+                $color = '#2a9d8f'; // Green for Completed Bookings
+                $eventType = 'Completed Booking';
+            } else if ($isSpecial) {
+                $color = '#7209b7'; // Purple for Special Training/Courses
+                $eventType = 'Special Training / Course';
+            } else if ($a->session_status === 'Cancelled') {
+                $color = '#e63946'; // Red for Cancelled
+                $eventType = 'Cancelled Booking';
+            } else {
+                $color = $colors[$a->lab_id] ?? '#1d3557'; // Lab color for Scheduled Session
+                $eventType = 'Scheduled Session';
+            }
             
             $events[] = [
                 'id' => $a->id,
@@ -267,9 +374,13 @@ class AllocationController extends Controller {
                 'borderColor' => $color,
                 'textColor' => '#ffffff',
                 'extendedProps' => [
+                    'isMaintenance' => false,
+                    'eventType' => $eventType,
                     'labName' => $a->lab_name,
                     'labCode' => $a->lab_code,
                     'labId' => $a->lab_id,
+                    'campId' => $a->camp_id,
+                    'campName' => $a->camp_name ?: 'Global',
                     'instructorName' => "{$a->instructor_rank} {$a->instructor_name}",
                     'instructorId' => $a->instructor_id,
                     'lessonName' => $a->lesson_name,
@@ -278,6 +389,41 @@ class AllocationController extends Controller {
                     'remarks' => $a->remarks ?: 'None',
                     'sessionStatus' => $a->session_status,
                     'instructorRemarks' => $a->instructor_remarks ?: ''
+                ]
+            ];
+        }
+
+        // Fetch maintenance records
+        $maintModel = $this->model('MaintenanceModel');
+        $maintenance = $maintModel->getMaintenanceByDateRange($startDate, $endDate, $campId ?: null);
+        
+        foreach ($maintenance as $m) {
+            $equip = '';
+            if ($m->equipment_type === 'computer') {
+                $equip = "PC: " . ($m->computer_asset_no ?: $m->equipment_id);
+            } else if ($m->equipment_type === 'smart_board') {
+                $equip = "SmartBoard: " . ($m->smartboard_asset_id ?: $m->equipment_id);
+            } else {
+                $equip = ucfirst($m->equipment_type);
+            }
+
+            $events[] = [
+                'id' => 'maint_' . $m->id,
+                'title' => "🔧 [Maint] {$equip} - {$m->issue_type}",
+                'start' => $m->repair_date,
+                'allDay' => true,
+                'backgroundColor' => '#f4a261', // Orange/Amber for maintenance
+                'borderColor' => '#f4a261',
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'isMaintenance' => true,
+                    'eventType' => 'Maintenance Schedule',
+                    'equipmentType' => ucfirst($m->equipment_type),
+                    'equipmentIdentifier' => $equip,
+                    'issueType' => $m->issue_type,
+                    'assignedTechnician' => $m->assigned_technician,
+                    'status' => ucfirst($m->status),
+                    'remarks' => $m->notes ?: 'None'
                 ]
             ];
         }
@@ -292,7 +438,6 @@ class AllocationController extends Controller {
         requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Get JSON input body
             $raw = file_get_contents('php://input');
             $json = json_decode($raw, true);
 
@@ -301,7 +446,7 @@ class AllocationController extends Controller {
                 return;
             }
 
-            // Verify CSRF via request header (Central AJAX wrapper passes it as X-CSRF-TOKEN)
+            // Verify CSRF via request header
             $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
             if (!verifyCsrfToken($csrfToken)) {
                 $this->json(['success' => false, 'message' => 'Security validation token mismatch.'], 403);
@@ -317,6 +462,18 @@ class AllocationController extends Controller {
             $alloc = $this->allocModel->getAllocationById($id);
             if (!$alloc) {
                 $this->json(['success' => false, 'message' => 'Laboratory allocation booking not found.'], 404);
+                return;
+            }
+
+            // Access control check
+            if (isCampAdmin() && (int)$alloc->camp_id !== (int)$_SESSION['camp_id']) {
+                $this->json(['success' => false, 'message' => 'Access denied. You can only move allocations in your own camp.'], 403);
+                return;
+            }
+
+            // Prevent past date or time allocations
+            if (strtotime($newDate . ' ' . $newStartTime) < time()) {
+                $this->json(['success' => false, 'message' => 'Cannot move allocation to a past date or time.']);
                 return;
             }
 
@@ -336,7 +493,8 @@ class AllocationController extends Controller {
                 'date' => $newDate,
                 'start_time' => $newStartTime,
                 'end_time' => $newEndTime,
-                'remarks' => $alloc->remarks
+                'remarks' => $alloc->remarks,
+                'camp_id' => $alloc->camp_id
             ];
 
             if ($this->allocModel->updateAllocation($id, $data)) {
@@ -409,7 +567,6 @@ class AllocationController extends Controller {
             $status = trim($_POST['session_status'] ?? '');
             $remarks = trim($_POST['instructor_remarks'] ?? '');
 
-            // Validation
             $allowedStatuses = ['Completed Successfully', 'Partially Completed', 'Cancelled'];
             if (!in_array($status, $allowedStatuses)) {
                 flash('dashboard_error', 'Please select a valid session status.', 'alert alert-danger');

@@ -33,6 +33,14 @@ class Database {
         if ($this->dbh === null) {
             try {
                 $this->dbh = new PDO($this->dsn, $this->user, $this->pass, $this->options);
+
+                // Sync database connection timezone with PHP timezone
+                $now = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
+                $offset = $now->getOffset();
+                $hours = intval($offset / 3600);
+                $minutes = abs(intval(($offset % 3600) / 60));
+                $mysql_offset = sprintf('%+03d:%02d', $hours, $minutes);
+                $this->dbh->exec("SET time_zone = '{$mysql_offset}'");
             } catch (PDOException $e) {
                 $this->error = $e->getMessage();
                 throw $e;

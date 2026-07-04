@@ -1,6 +1,6 @@
 -- SLAF Computer Laboratory Management System Database Schema
-CREATE DATABASE IF NOT EXISTS slaf_clms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE slaf_clms;
+CREATE DATABASE IF NOT EXISTS itwekala_slaf_clms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE itwekala_slaf_clms;
 
 -- 1. Roles Table
 CREATE TABLE IF NOT EXISTS roles (

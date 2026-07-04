@@ -158,14 +158,26 @@
                     </a>
                 </li>
                 <li class="sidebar-menu-header">Administration</li>
+                <?php if (isSuperAdmin()): ?>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'user_management') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>user" class="sidebar-link">
                         <i class="bi bi-people-fill"></i> User Management
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'camps') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>camp" class="sidebar-link">
+                        <i class="bi bi-geo-alt-fill"></i> SLAF Camps
+                    </a>
+                </li>
+                <?php endif; ?>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_password') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>auth/myPassword" class="sidebar-link">
                         <i class="bi bi-key-fill"></i> Change My Password
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_login_activity') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myLoginActivity" class="sidebar-link">
+                        <i class="bi bi-clock-history"></i> My Login Activity
                     </a>
                 </li>
 
@@ -180,6 +192,7 @@
                         <i class="bi bi-file-earmark-bar-graph"></i> Workload & Analytics
                     </a>
                 </li>
+                <?php if (isSuperAdmin()): ?>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'audit') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>audit" class="sidebar-link">
                         <i class="bi bi-journal-text"></i> System Audit Logs
@@ -190,6 +203,7 @@
                         <i class="bi bi-heart-pulse-fill"></i> System Health Check
                     </a>
                 </li>
+                <?php endif; ?>
 
             <?php elseif (isInstructor()): ?>
                 <!-- Instructor Sidebar Options -->
@@ -231,6 +245,11 @@
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_password') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>auth/myPassword" class="sidebar-link">
                         <i class="bi bi-key-fill"></i> Change My Password
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_login_activity') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>auth/myLoginActivity" class="sidebar-link">
+                        <i class="bi bi-clock-history"></i> My Login Activity
                     </a>
                 </li>
             <?php endif; ?>
@@ -337,11 +356,15 @@
                     <ul class="dropdown-menu dropdown-menu-end" style="border-radius:12px;background:var(--bg-card);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.12);">
                         <li class="dropdown-header text-uppercase pb-1" style="font-size: 0.7rem; font-weight: 700;">Role</li>
                         <li><span class="dropdown-item-text fw-bold text-primary small pt-0"><?php echo e($_SESSION['user_role_name']); ?></span></li>
+                        <?php if (isset($_SESSION['camp_name']) && $_SESSION['camp_name']): ?>
+                            <li><span class="dropdown-item-text text-muted small pt-0" style="white-space: nowrap;"><i class="bi bi-geo-alt-fill text-secondary me-1"></i> <?php echo e($_SESSION['camp_name']); ?></span></li>
+                        <?php endif; ?>
                         <li><hr class="dropdown-divider border-color"></li>
                         <?php if (isInstructor()): ?>
                             <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>instructor/profile"><i class="bi bi-person-gear me-2 text-secondary"></i> Edit Contact Info</a></li>
                         <?php endif; ?>
                         <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>auth/myPassword"><i class="bi bi-key-fill me-2 text-secondary"></i> Change My Password</a></li>
+                        <li><a class="dropdown-item small" href="<?php echo URLROOT; ?>auth/myLoginActivity"><i class="bi bi-clock-history me-2 text-secondary"></i> My Login Activity</a></li>
                         <li><hr class="dropdown-divider border-color"></li>
                         <li><a class="dropdown-item small text-danger" href="<?php echo URLROOT; ?>auth/logout"><i class="bi bi-box-arrow-right me-2 text-danger"></i> Logout</a></li>
                     </ul>

@@ -1,5 +1,5 @@
 -- Database Seeding for SLAF Computer Laboratory Management System
-USE slaf_clms;
+USE itwekala_slaf_clms;
 
 -- Seed Roles
 INSERT INTO roles (id, name, description) VALUES

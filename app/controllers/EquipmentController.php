@@ -21,8 +21,14 @@ class EquipmentController extends Controller {
     public function computers() {
         requireAdmin();
 
-        $computers = $this->computerModel->getAllComputers();
-        $labs = $this->labModel->getActiveLabs();
+        if (isSuperAdmin()) {
+            $computers = $this->computerModel->getAllComputers();
+            $labs = $this->labModel->getActiveLabs();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $computers = $this->computerModel->getAllComputers($campId);
+            $labs = $this->labModel->getActiveLabs($campId);
+        }
 
         $data = [
             'title' => 'Computers Inventory',
@@ -61,6 +67,15 @@ class EquipmentController extends Controller {
             $labId = !empty($_POST['lab_id']) ? (int)$_POST['lab_id'] : null;
             $status = $_POST['status'] ?? 'active';
 
+            // Verify lab camp ID if camp admin
+            if ($labId && isCampAdmin()) {
+                $lab = $this->labModel->getLabById($labId);
+                if (!$lab || (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only assign computers to labs in your own camp.', 'alert alert-danger');
+                    redirect('equipment/computers');
+                }
+            }
+
             // Check uniqueness of asset number
             if ($this->computerModel->checkAssetNoExists($assetNo)) {
                 flash('dashboard_error', "Computer asset number '{$assetNo}' already exists in inventory.", 'alert alert-danger');
@@ -98,6 +113,18 @@ class EquipmentController extends Controller {
     public function updateComputer($id) {
         requireAdmin();
 
+        $comp = $this->computerModel->getComputerById($id);
+        if (!$comp) {
+            flash('dashboard_error', 'Workstation not found.', 'alert alert-danger');
+            redirect('equipment/computers');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $comp->camp_id !== null && (int)$comp->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only update workstations in your own camp.', 'alert alert-danger');
+            redirect('equipment/computers');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
@@ -116,6 +143,15 @@ class EquipmentController extends Controller {
             $warrantyStatus = trim($_POST['warranty_status']);
             $labId = !empty($_POST['lab_id']) ? (int)$_POST['lab_id'] : null;
             $status = $_POST['status'] ?? 'active';
+
+            // Verify lab camp ID if camp admin
+            if ($labId && isCampAdmin()) {
+                $lab = $this->labModel->getLabById($labId);
+                if (!$lab || (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only assign computers to labs in your own camp.', 'alert alert-danger');
+                    redirect('equipment/computers');
+                }
+            }
 
             // Check duplicate asset numbers excluding self
             if ($this->computerModel->checkAssetNoExists($assetNo, $id)) {
@@ -155,25 +191,37 @@ class EquipmentController extends Controller {
         requireAdmin();
 
         $comp = $this->computerModel->getComputerById($id);
-        if ($comp) {
-            if ($this->computerModel->deleteComputer($id)) {
-                $this->logActivity('DELETE_COMPUTER', 'EQUIPMENT', "Deleted computer asset '{$comp->asset_no}' from inventory.");
-                flash('dashboard_success', 'Workstation removed from inventory.', 'alert alert-success');
-            } else {
-                flash('dashboard_error', 'Failed to remove workstation.', 'alert alert-danger');
-            }
+        if (!$comp) {
+            flash('dashboard_error', 'Workstation not found.', 'alert alert-danger');
+            redirect('equipment/computers');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $comp->camp_id !== null && (int)$comp->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only delete workstations in your own camp.', 'alert alert-danger');
+            redirect('equipment/computers');
+        }
+
+        if ($this->computerModel->deleteComputer($id)) {
+            $this->logActivity('DELETE_COMPUTER', 'EQUIPMENT', "Deleted computer asset '{$comp->asset_no}' from inventory.");
+            flash('dashboard_success', 'Workstation removed from inventory.', 'alert alert-success');
+        } else {
+            flash('dashboard_error', 'Failed to remove workstation.', 'alert alert-danger');
         }
         redirect('equipment/computers');
     }
 
-    /**
-     * Smart Boards List & Management Page
-     */
     public function smartboards() {
         requireAdmin();
 
-        $smartboards = $this->smartBoardModel->getAllSmartBoards();
-        $labs = $this->labModel->getActiveLabs();
+        if (isSuperAdmin()) {
+            $smartboards = $this->smartBoardModel->getAllSmartBoards();
+            $labs = $this->labModel->getActiveLabs();
+        } else {
+            $campId = $_SESSION['camp_id'];
+            $smartboards = $this->smartBoardModel->getAllSmartBoards($campId);
+            $labs = $this->labModel->getActiveLabs($campId);
+        }
 
         $data = [
             'title' => 'Smart Boards Registry',
@@ -206,6 +254,15 @@ class EquipmentController extends Controller {
             $labId = !empty($_POST['lab_id']) ? (int)$_POST['lab_id'] : null;
             $status = $_POST['status'] ?? 'active';
 
+            // Verify lab camp ID if camp admin
+            if ($labId && isCampAdmin()) {
+                $lab = $this->labModel->getLabById($labId);
+                if (!$lab || (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only assign smart boards to labs in your own camp.', 'alert alert-danger');
+                    redirect('equipment/smartboards');
+                }
+            }
+
             // Check duplicate asset ID
             if ($this->smartBoardModel->checkAssetIdExists($assetId)) {
                 flash('dashboard_error', "Smart board asset ID '{$assetId}' already exists in inventory.", 'alert alert-danger');
@@ -237,6 +294,18 @@ class EquipmentController extends Controller {
     public function updateSmartBoard($id) {
         requireAdmin();
 
+        $sb = $this->smartBoardModel->getSmartBoardById($id);
+        if (!$sb) {
+            flash('dashboard_error', 'Smart board not found.', 'alert alert-danger');
+            redirect('equipment/smartboards');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $sb->camp_id !== null && (int)$sb->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only update smart boards in your own camp.', 'alert alert-danger');
+            redirect('equipment/smartboards');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!isset($_POST['csrf_token']) || !verifyCsrfToken($_POST['csrf_token'])) {
                 flash('dashboard_error', 'Invalid security token.', 'alert alert-danger');
@@ -249,6 +318,15 @@ class EquipmentController extends Controller {
             $installationDate = trim($_POST['installation_date']);
             $labId = !empty($_POST['lab_id']) ? (int)$_POST['lab_id'] : null;
             $status = $_POST['status'] ?? 'active';
+
+            // Verify lab camp ID if camp admin
+            if ($labId && isCampAdmin()) {
+                $lab = $this->labModel->getLabById($labId);
+                if (!$lab || (int)$lab->camp_id !== (int)$_SESSION['camp_id']) {
+                    flash('dashboard_error', 'Access denied. You can only assign smart boards to labs in your own camp.', 'alert alert-danger');
+                    redirect('equipment/smartboards');
+                }
+            }
 
             // Check duplicate ID excluding self
             if ($this->smartBoardModel->checkAssetIdExists($assetId, $id)) {
@@ -282,13 +360,22 @@ class EquipmentController extends Controller {
         requireAdmin();
 
         $sb = $this->smartBoardModel->getSmartBoardById($id);
-        if ($sb) {
-            if ($this->smartBoardModel->deleteSmartBoard($id)) {
-                $this->logActivity('DELETE_SMART_BOARD', 'EQUIPMENT', "Removed smart board '{$sb->asset_id}' from registry.");
-                flash('dashboard_success', 'Smart board removed from registry.', 'alert alert-success');
-            } else {
-                flash('dashboard_error', 'Failed to remove smart board.', 'alert alert-danger');
-            }
+        if (!$sb) {
+            flash('dashboard_error', 'Smart board not found.', 'alert alert-danger');
+            redirect('equipment/smartboards');
+        }
+
+        // Camp isolation check
+        if (isCampAdmin() && $sb->camp_id !== null && (int)$sb->camp_id !== (int)$_SESSION['camp_id']) {
+            flash('dashboard_error', 'Access denied. You can only delete smart boards in your own camp.', 'alert alert-danger');
+            redirect('equipment/smartboards');
+        }
+
+        if ($this->smartBoardModel->deleteSmartBoard($id)) {
+            $this->logActivity('DELETE_SMART_BOARD', 'EQUIPMENT', "Removed smart board '{$sb->asset_id}' from registry.");
+            flash('dashboard_success', 'Smart board removed from registry.', 'alert alert-success');
+        } else {
+            flash('dashboard_error', 'Failed to remove smart board.', 'alert alert-danger');
         }
         redirect('equipment/smartboards');
     }

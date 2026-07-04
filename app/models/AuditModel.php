@@ -21,6 +21,21 @@ class AuditModel extends Model {
     }
 
     /**
+     * Retrieve login history for a specific user
+     */
+    public function getUserLoginLogs($userId, $username, $limit = 100) {
+        $this->db->query("SELECT * FROM audit_logs 
+                          WHERE (user_id = :user_id AND (action = 'LOGIN' OR action = 'LOGOUT' OR action = 'PASSWORD_CHANGED')) 
+                             OR (details LIKE :username_lock AND action = 'ACCOUNT_LOCKED')
+                          ORDER BY created_at DESC 
+                          LIMIT :limit");
+        $this->db->bind(':user_id', $userId);
+        $this->db->bind(':username_lock', '%' . $username . '%');
+        $this->db->bind(':limit', (int)$limit);
+        return $this->db->resultSet();
+    }
+
+    /**
      * Retrieve audit history (latest first)
      */
     public function getAllLogs() {

@@ -8,9 +8,10 @@ class UserModel extends Model {
      * Find user by username
      */
     public function findUserByUsername($username) {
-        $this->db->query("SELECT u.*, r.name as role_name 
+        $this->db->query("SELECT u.*, r.name as role_name, c.name as camp_name 
                           FROM users u 
                           JOIN roles r ON u.role_id = r.id 
+                          LEFT JOIN camps c ON u.camp_id = c.id
                           WHERE u.username = :username");
         $this->db->bind(':username', $username);
         return $this->db->single();
@@ -20,9 +21,10 @@ class UserModel extends Model {
      * Get user details by ID
      */
     public function getUserById($id) {
-        $this->db->query("SELECT u.*, r.name as role_name 
+        $this->db->query("SELECT u.*, r.name as role_name, c.name as camp_name 
                           FROM users u 
                           JOIN roles r ON u.role_id = r.id 
+                          LEFT JOIN camps c ON u.camp_id = c.id
                           WHERE u.id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single();
@@ -134,11 +136,11 @@ class UserModel extends Model {
     /**
      * Create a new user login account
      */
-    public function createUser($username, $password, $roleId, $status = 'active', $forcePasswordChange = 0, $passwordExpiryDays = 90) {
+    public function createUser($username, $password, $roleId, $status = 'active', $forcePasswordChange = 0, $passwordExpiryDays = 90, $campId = null) {
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
         
-        $this->db->query("INSERT INTO users (username, password, role_id, status, force_password_change, password_expiry_days, last_password_change) 
-                          VALUES (:username, :password, :role_id, :status, :force_password_change, :password_expiry_days, NOW())");
+        $this->db->query("INSERT INTO users (username, password, role_id, status, force_password_change, password_expiry_days, last_password_change, camp_id) 
+                          VALUES (:username, :password, :role_id, :status, :force_password_change, :password_expiry_days, NOW(), :camp_id)");
         
         $this->db->bind(':username', $username);
         $this->db->bind(':password', $hashedPassword);
@@ -146,6 +148,7 @@ class UserModel extends Model {
         $this->db->bind(':status', $status);
         $this->db->bind(':force_password_change', $forcePasswordChange);
         $this->db->bind(':password_expiry_days', $passwordExpiryDays);
+        $this->db->bind(':camp_id', $campId);
         
         if ($this->db->execute()) {
             $userId = $this->db->lastInsertId();
@@ -158,12 +161,13 @@ class UserModel extends Model {
     /**
      * Update user details (Role, Status, Force PW, PW Expiry)
      */
-    public function updateUser($id, $roleId, $status, $forcePasswordChange = 0, $passwordExpiryDays = 90) {
-        $this->db->query("UPDATE users SET role_id = :role_id, status = :status, force_password_change = :force_password_change, password_expiry_days = :password_expiry_days WHERE id = :id");
+    public function updateUser($id, $roleId, $status, $forcePasswordChange = 0, $passwordExpiryDays = 90, $campId = null) {
+        $this->db->query("UPDATE users SET role_id = :role_id, status = :status, force_password_change = :force_password_change, password_expiry_days = :password_expiry_days, camp_id = :camp_id WHERE id = :id");
         $this->db->bind(':role_id', $roleId);
         $this->db->bind(':status', $status);
         $this->db->bind(':force_password_change', $forcePasswordChange);
         $this->db->bind(':password_expiry_days', $passwordExpiryDays);
+        $this->db->bind(':camp_id', $campId);
         $this->db->bind(':id', $id);
         return $this->db->execute();
     }
@@ -233,9 +237,10 @@ class UserModel extends Model {
      * Get all users with role information
      */
     public function getAllUsers() {
-        $this->db->query("SELECT u.id, u.username, u.status, u.last_login, u.created_at, u.last_password_change, u.failed_attempts, u.force_password_change, u.password_expiry_days, r.name as role_name, r.id as role_id 
+        $this->db->query("SELECT u.id, u.username, u.status, u.last_login, u.created_at, u.last_password_change, u.failed_attempts, u.force_password_change, u.password_expiry_days, r.name as role_name, r.id as role_id, u.camp_id, c.name as camp_name 
                           FROM users u 
                           JOIN roles r ON u.role_id = r.id 
+                          LEFT JOIN camps c ON u.camp_id = c.id
                           ORDER BY u.created_at DESC");
         return $this->db->resultSet();
     }
@@ -253,9 +258,10 @@ class UserModel extends Model {
      * Search users by username, role, or status
      */
     public function searchUsers($query, $roleId = null) {
-        $sql = "SELECT u.id, u.username, u.status, u.last_login, u.created_at, u.last_password_change, u.failed_attempts, u.force_password_change, u.password_expiry_days, r.name as role_name, r.id as role_id 
+        $sql = "SELECT u.id, u.username, u.status, u.last_login, u.created_at, u.last_password_change, u.failed_attempts, u.force_password_change, u.password_expiry_days, r.name as role_name, r.id as role_id, u.camp_id, c.name as camp_name 
                 FROM users u 
                 JOIN roles r ON u.role_id = r.id 
+                LEFT JOIN camps c ON u.camp_id = c.id
                 WHERE u.username LIKE :query";
         
         if ($roleId) {

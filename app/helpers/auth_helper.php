@@ -22,10 +22,24 @@ function getUserRole() {
 }
 
 /**
- * Check if user is an Administrator
+ * Check if user is a Super Administrator (Role 1)
+ */
+function isSuperAdmin() {
+    return isLoggedIn() && getUserRole() === 1;
+}
+
+/**
+ * Check if user is a Camp Administrator (Role 3)
+ */
+function isCampAdmin() {
+    return isLoggedIn() && getUserRole() === 3;
+}
+
+/**
+ * Check if user is an Administrator (Super Admin or Camp Admin)
  */
 function isAdmin() {
-    return isLoggedIn() && getUserRole() === 1;
+    return isLoggedIn() && (getUserRole() === 1 || getUserRole() === 3);
 }
 
 /**
@@ -77,7 +91,7 @@ function requireLogin() {
 }
 
 /**
- * Require Administrator role middleware
+ * Require Administrator role middleware (allows both Super Admin and Camp Admin)
  */
 function requireAdmin() {
     requireLogin();
@@ -86,6 +100,24 @@ function requireAdmin() {
         
         // Redirect to instructor dashboard or appropriate page
         if (isInstructor()) {
+            redirect('dashboard/instructor');
+        } else {
+            redirect('auth/login');
+        }
+    }
+}
+
+/**
+ * Require Super Administrator role middleware
+ */
+function requireSuperAdmin() {
+    requireLogin();
+    if (!isSuperAdmin()) {
+        flash('dashboard_error', 'Unauthorized access. Super Administrator privileges required.', 'alert alert-danger alert-dismissible fade show');
+        
+        if (isCampAdmin()) {
+            redirect('dashboard/admin');
+        } elseif (isInstructor()) {
             redirect('dashboard/instructor');
         } else {
             redirect('auth/login');
