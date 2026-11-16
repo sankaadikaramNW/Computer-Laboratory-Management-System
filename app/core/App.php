@@ -46,11 +46,29 @@ class App {
      * Get clean URL parameter array
      */
     public function getUrl() {
-        if (isset($_GET['url'])) {
-            $url = rtrim($_GET['url'], '/');
+        if (isset($_GET['url']) && $_GET['url'] !== '') {
+            $url = trim($_GET['url'], '/');
             $url = filter_var($url, FILTER_SANITIZE_URL);
             return explode('/', $url);
         }
+
+        // Direct fallback from REQUEST_URI for web servers (Nginx / CloudPanel)
+        if (!empty($_SERVER['REQUEST_URI'])) {
+            $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            if (isset($_SERVER['SCRIPT_NAME'])) {
+                $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+                if ($scriptDir !== '/' && $scriptDir !== '.' && !empty($scriptDir) && strpos($requestUri, $scriptDir) === 0) {
+                    $requestUri = substr($requestUri, strlen($scriptDir));
+                }
+            }
+            $requestUri = preg_replace('/^\/?index\.php/', '', $requestUri);
+            $url = trim($requestUri, '/');
+            if (!empty($url)) {
+                $url = filter_var($url, FILTER_SANITIZE_URL);
+                return explode('/', $url);
+            }
+        }
+
         return [];
     }
 }

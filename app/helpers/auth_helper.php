@@ -3,7 +3,7 @@
  * Simple Redirect Helper
  */
 function redirect($page) {
-    header('location: ' . URLROOT . $page);
+    header('location: ' . URLROOT . ltrim($page, '/'));
     exit();
 }
 

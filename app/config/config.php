@@ -48,17 +48,23 @@ if (
     $_SERVER['HTTPS'] = 'on';
 }
 
-// Dynamic URL Root Detection
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-$host = $_SERVER['HTTP_HOST'];
-$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']); // e.g., /public/index.php or /index.php
-$publicDir = dirname($scriptName);
+// APP_URL support: prefer explicit APP_URL from .env if defined, else detect dynamically
+$envAppUrl = getenv('APP_URL');
+if (!empty($envAppUrl)) {
+    define('URLROOT', rtrim($envAppUrl, '/') . '/');
+} else {
+    // Dynamic URL Root Detection
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? ''); // e.g., /public/index.php or /index.php
+    $publicDir = dirname($scriptName);
 
-// Strip /public suffix if present (local dev with public/ folder structure)
-$baseUrlPath = preg_replace('/\/public$/', '', rtrim($publicDir, '/'));
+    // Strip /public suffix if present (local dev with public/ folder structure)
+    $baseUrlPath = preg_replace('/\/public$/', '', rtrim($publicDir, '/\\'));
 
-// Ensure we always have a clean trailing slash
-define('URLROOT', $protocol . $host . $baseUrlPath . '/');
+    // Ensure we always have a clean trailing slash
+    define('URLROOT', $protocol . $host . ($baseUrlPath ? '/' . ltrim($baseUrlPath, '/') : '') . '/');
+}
 define('SITENAME', 'SLAF CLMS');
 
 // System Name

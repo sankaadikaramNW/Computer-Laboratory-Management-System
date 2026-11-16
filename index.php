@@ -142,6 +142,24 @@ require_once 'app/core/Controller.php';
 require_once 'app/core/Database.php';
 require_once 'app/core/Model.php';
 
+// Normalize routing URL for Nginx servers (CloudPanel) that route via try_files without ?url=
+if (!isset($_GET['url']) || $_GET['url'] === '') {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if (!empty($requestPath)) {
+        if (isset($_SERVER['SCRIPT_NAME'])) {
+            $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+            if ($scriptDir !== '/' && $scriptDir !== '.' && !empty($scriptDir) && strpos($requestPath, $scriptDir) === 0) {
+                $requestPath = substr($requestPath, strlen($scriptDir));
+            }
+        }
+        $requestPath = preg_replace('/^\/?index\.php/', '', $requestPath);
+        $cleanUrl = trim($requestPath, '/');
+        if (!empty($cleanUrl)) {
+            $_GET['url'] = $cleanUrl;
+        }
+    }
+}
+
 // Load Startup Validator and Validate Environment
 require_once 'app/core/StartupValidator.php';
 StartupValidator::run();
