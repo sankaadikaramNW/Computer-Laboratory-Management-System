@@ -60,8 +60,7 @@ Computer Laboratory Management System/
 │   └── views/                 ← PHP view templates
 │
 ├── database/
-│   ├── schema.sql             ← Table structure (run this first)
-│   └── seed.sql               ← Default data & admin account (run this second)
+│   └── schema.sql             ← Consolidated database structure and seed data
 │
 ├── public/
 │   ├── index.php              ← Application entry point
@@ -165,9 +164,9 @@ The system uses clean URLs (e.g., `/instructor/register`). Apache's `mod_rewrite
 
 ---
 
-### Step 5 — Import the Database Schema
+### Step 5 — Import the Database
 
-This creates all the tables in the database.
+This creates all the tables and inserts default roles, system settings, sample labs, and sample instructors.
 
 **Option A — Using phpMyAdmin:**
 
@@ -184,31 +183,6 @@ This creates all the tables in the database.
 
 ```bash
 mysql -u root -p itwekala_slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\schema.sql"
-```
-
----
-
-### Step 6 — Import the Seed Data
-
-This inserts the default admin account, roles, sample labs, and sample instructors.
-
-> ⚠️ **Important:** Run the **schema.sql first** before seed.sql. Do not skip Step 5.
-
-**Option A — Using phpMyAdmin:**
-
-1. Go to `http://localhost/phpmyadmin`
-2. Click on **`itwekala_slaf_clms`** in the left sidebar
-3. Click the **Import** tab
-4. Click **"Choose File"** and select:
-   ```
-   database/seed.sql
-   ```
-5. Click **Go**
-
-**Option B — Using Command Line:**
-
-```bash
-mysql -u root -p itwekala_slaf_clms < "C:\xampp\htdocs\Computer-Laboratory-Management-System\database\seed.sql"
 ```
 
 ---
@@ -385,8 +359,8 @@ The `itwekala_slaf_clms` database contains **18 tables**:
 
 ### ❌ Login says "Invalid credentials" with correct password
 
-**Cause:** `seed.sql` was not imported or was imported to the wrong database  
-**Fix:** Make sure you clicked on `itwekala_slaf_clms` in phpMyAdmin before importing `seed.sql`. Repeat [Step 6](#step-6--import-the-seed-data).
+**Cause:** The schema/seed file was not imported or was imported to the wrong database  
+**Fix:** Make sure you clicked on `itwekala_slaf_clms` in phpMyAdmin before importing `schema.sql`. Repeat [Step 5](#step-5--import-the-database).
 
 ---
 
@@ -428,13 +402,12 @@ Use this checklist every time you set up the project on a new machine:
 [ ] 3. mod_rewrite enabled and AllowOverride All set in httpd.conf
 [ ] 4. PHP GD extension enabled in php.ini (and Apache restarted)
 [ ] 5. Database 'itwekala_slaf_clms' created in phpMyAdmin
-[ ] 6. database/schema.sql imported successfully
-[ ] 7. database/seed.sql imported successfully
-[ ] 8. app/config/config.php updated with correct DB credentials
-[ ] 9. uploads/instructors/ folder created and has write permissions
-[ ] 10. public/images/Picture1.png is present (SLAF crest)
-[ ] 11. Login tested with: admin / admin123
-[ ] 12. Admin password changed immediately after first login
+[ ] 6. database/schema.sql (consolidated schema & seed) imported successfully
+[ ] 7. app/config/config.php updated with correct DB credentials
+[ ] 8. uploads/instructors/ folder created and has write permissions
+[ ] 9. public/images/Picture1.png is present (SLAF crest)
+[ ] 10. Login tested with: admin / admin123
+[ ] 11. Admin password changed immediately after first login
 ```
 
 ---

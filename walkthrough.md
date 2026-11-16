@@ -27,3 +27,10 @@ We have successfully migrated the database credentials to a `.env` file and reso
 * **POST Submission**: Attempting to log in while the database was offline refreshed the login page with a red alert banner:
   > Database connection error. Please verify the database is active and schema is imported.
 * **Security Check**: Verified `.htaccess` configuration blocks browser access to the `.env` file.
+
+### 3. Reverse Proxy & Redirect Loop Resolution
+* **[config.php](file:///c:/xampp/htdocs/Computer-Laboratory-Management-System/app/config/config.php)**: Added reverse proxy SSL termination detection. It checks for common headers like `HTTP_X_FORWARDED_PROTO`, `HTTP_X_FORWARDED_SSL`, etc., and overrides `$_SERVER['HTTPS'] = 'on'`. This ensures:
+  1. `URLROOT` resolves with `https://` protocol on proxies terminating SSL.
+  2. Redirects via the `redirect()` helper are generated as `https://...` links directly, bypassing HTTP-to-HTTPS redirect loops.
+  3. Session cookies are secure (`session.cookie_secure = 1`) when client traffic is secure.
+

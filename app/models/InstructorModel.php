@@ -56,7 +56,7 @@ class InstructorModel extends Model {
      * Create instructor profile
      */
     public function createInstructor($data) {
-        $this->db->query("INSERT INTO instructors (user_id, service_no, rank, full_name, trade, contact_no, email, profile_photo, photo_uploaded_at, status) 
+        $this->db->query("INSERT INTO instructors (user_id, service_no, `rank`, full_name, trade, contact_no, email, profile_photo, photo_uploaded_at, status) 
                           VALUES (:user_id, :service_no, :rank, :full_name, :trade, :contact_no, :email, :profile_photo, :photo_uploaded_at, :status)");
         
         $this->db->bind(':user_id', $data['user_id'] ?: null);
@@ -80,7 +80,7 @@ class InstructorModel extends Model {
         $this->db->query("UPDATE instructors 
                           SET user_id = :user_id, 
                               service_no = :service_no, 
-                              rank = :rank, 
+                              `rank` = :rank, 
                               full_name = :full_name, 
                               trade = :trade, 
                               contact_no = :contact_no, 

@@ -67,7 +67,7 @@ Ensures local config files (`.env`), database volumes (`db_data/`), repository h
 
 ## 3. Database Agnostic Seeding
 
-The initialization SQL files [schema.sql](file:///c:/xampp/htdocs/Computer%20Laboratory%20Management%20System/database/schema.sql) and [seed.sql](file:///c:/xampp/htdocs/Computer%20Laboratory%20Management%20System/database/seed.sql) were refactored to remove hardcoded statements:
+The initialization SQL file [schema.sql](file:///c:/xampp/htdocs/Computer%20Laboratory%20Management%20System/database/schema.sql) was consolidated to define both the database structure and default seeds. Hardcoded statements were refactored:
 - Removed: `CREATE DATABASE IF NOT EXISTS slaf_clms;`
 - Removed: `USE slaf_clms;`
 

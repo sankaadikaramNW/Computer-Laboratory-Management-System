@@ -285,7 +285,7 @@ class InquiryModel extends Model {
         $results = [];
 
         // Instructors
-        $this->db->query("SELECT 'Instructor' as module, CONCAT(rank,' ',full_name) as label,
+        $this->db->query("SELECT 'Instructor' as module, CONCAT(`rank`,' ',full_name) as label,
                                   service_no as sub, 'instructor' as link_base, id
                            FROM instructors WHERE service_no LIKE :t OR full_name LIKE :t2 LIMIT 5");
         $this->db->bind(':t',  $like);
