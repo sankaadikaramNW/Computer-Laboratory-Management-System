@@ -13,15 +13,6 @@ pipeline {
             }
         }
 
-        stage('PHP Syntax Check') {
-            steps {
-                sh '''
-                    echo "Checking PHP files for syntax errors..."
-                    find . -name "*.php" -not -path "./vendor/*" -exec php -l {} +
-                '''
-            }
-        }
-
         stage('Deploy to CloudPanel') {
             steps {
                 withCredentials([string(credentialsId: 'cloudpanel-server-ip', variable: 'SERVER_IP')]) {
@@ -43,12 +34,13 @@ pipeline {
             }
         }
 
-        stage('Set Permissions & Verify') {
+        stage('Verify PHP & Set Permissions') {
             steps {
                 withCredentials([string(credentialsId: 'cloudpanel-server-ip', variable: 'SERVER_IP')]) {
                     sshagent(credentials: ['cloudpanel-clms-ssh']) {
                         sh '''
                             ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "
+                                find ${REMOTE_PATH} -name '*.php' -exec php -l {} + &&
                                 find ${REMOTE_PATH} -type d -exec chmod 770 {} + &&
                                 find ${REMOTE_PATH} -type f -not -name '.env' -exec chmod 660 {} + &&
                                 chmod 600 ${REMOTE_PATH}/.env
