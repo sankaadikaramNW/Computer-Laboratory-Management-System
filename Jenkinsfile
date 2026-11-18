@@ -44,7 +44,8 @@ pipeline {
                             find ${REMOTE_PATH} -name '*.php' -exec php -l {} + &&
                             find ${REMOTE_PATH} -type d -exec chmod 770 {} + &&
                             find ${REMOTE_PATH} -type f -not -name '.env' -exec chmod 660 {} + &&
-                            chmod 600 ${REMOTE_PATH}/.env
+                            chmod 600 ${REMOTE_PATH}/.env &&
+                            find ${REMOTE_PATH} -name '*.php' -exec touch {} +
                         "
                     '''
                 }
