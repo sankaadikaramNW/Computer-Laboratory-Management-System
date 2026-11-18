@@ -27,7 +27,7 @@ pipeline {
                             --exclude='*.rar' \
                             --exclude='*.zip' \
                             --exclude='Jenkinsfile' \
-                            -czf - . | ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "tar --overwrite --no-same-owner -xzf - -C ${REMOTE_PATH}"
+                            -czf - . | ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "tar --overwrite --no-same-owner -m -xzf - -C ${REMOTE_PATH}"
                     '''
                 }
             }
