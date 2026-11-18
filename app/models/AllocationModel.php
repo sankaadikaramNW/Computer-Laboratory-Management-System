@@ -105,12 +105,13 @@ class AllocationModel extends Model {
      * Create an allocation
      */
     public function createAllocation($data) {
-        $this->db->query("INSERT INTO allocations (instructor_id, lesson_id, lab_id, date, start_time, end_time, remarks, camp_id) 
-                          VALUES (:instructor_id, :lesson_id, :lab_id, :date, :start_time, :end_time, :remarks, :camp_id)");
+        $this->db->query("INSERT INTO allocations (instructor_id, lesson_id, lab_id, batch, date, start_time, end_time, remarks, camp_id) 
+                          VALUES (:instructor_id, :lesson_id, :lab_id, :batch, :date, :start_time, :end_time, :remarks, :camp_id)");
         
         $this->db->bind(':instructor_id', $data['instructor_id']);
         $this->db->bind(':lesson_id', $data['lesson_id']);
         $this->db->bind(':lab_id', $data['lab_id']);
+        $this->db->bind(':batch', !empty($data['batch']) ? $data['batch'] : null);
         $this->db->bind(':date', $data['date']);
         $this->db->bind(':start_time', $data['start_time']);
         $this->db->bind(':end_time', $data['end_time']);
@@ -131,6 +132,7 @@ class AllocationModel extends Model {
                           SET instructor_id = :instructor_id, 
                               lesson_id = :lesson_id, 
                               lab_id = :lab_id, 
+                              batch = :batch,
                               date = :date, 
                               start_time = :start_time, 
                               end_time = :end_time, 
@@ -141,6 +143,7 @@ class AllocationModel extends Model {
         $this->db->bind(':instructor_id', $data['instructor_id']);
         $this->db->bind(':lesson_id', $data['lesson_id']);
         $this->db->bind(':lab_id', $data['lab_id']);
+        $this->db->bind(':batch', !empty($data['batch']) ? $data['batch'] : null);
         $this->db->bind(':date', $data['date']);
         $this->db->bind(':start_time', $data['start_time']);
         $this->db->bind(':end_time', $data['end_time']);

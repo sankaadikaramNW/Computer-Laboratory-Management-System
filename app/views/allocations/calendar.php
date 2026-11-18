@@ -56,13 +56,18 @@
     <div class="modal-dialog">
         <div class="modal-content" style="background-color: var(--card-bg); border: 1px solid var(--card-border);">
             <div class="modal-header border-color">
-                <h5 class="modal-title fw-bold" id="eventDetailModalLabel"><i class="bi bi-info-circle-fill me-2 text-primary"></i> Booking Details</h5>
+                <h5 class="modal-title fw-bold" id="eventDetailModalLabel"><i class="bi bi-info-circle-fill me-2 text-primary"></i> Class Session Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Laboratory</label>
-                    <div class="fw-semibold text-primary fs-6" id="det_lab"></div>
+                    <label class="form-label small fw-bold text-muted"><i class="bi bi-people-fill text-primary me-1"></i> Class / Course Batch</label>
+                    <div class="fw-bold text-primary fs-6" id="det_batch"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted"><i class="bi bi-door-closed text-secondary me-1"></i> Allocated Laboratory</label>
+                    <div class="fw-semibold text-secondary" id="det_lab"></div>
                 </div>
 
                 <div class="mb-3">
@@ -181,8 +186,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="add_remarks" class="form-label small fw-semibold">Remarks / Batch / Notes</label>
-                            <textarea name="remarks" id="add_remarks" class="form-control form-control-clms" rows="2" placeholder="e.g. IT Cpl Course, Batch 45"></textarea>
+                            <label for="add_batch_cal" class="form-label small fw-semibold">Class / Course Batch</label>
+                            <input type="text" name="batch" id="add_batch_cal" class="form-control form-control-clms" placeholder="e.g. IT Cpl Course, Batch 45 or NVQ Batch 2026/1" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="add_remarks" class="form-label small fw-semibold">Remarks / Notes</label>
+                            <textarea name="remarks" id="add_remarks" class="form-control form-control-clms" rows="2" placeholder="Optional notes..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer border-color">
@@ -257,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             var startTimeStr = pad(start.getHours()) + ':' + pad(start.getMinutes());
             var endTimeStr = end ? (pad(end.getHours()) + ':' + pad(end.getMinutes())) : '';
             
+            document.getElementById('det_batch').innerText = props.batch || 'General Batch';
             document.getElementById('det_lab').innerText = props.labCode + ' - ' + props.labName;
             document.getElementById('det_lesson').innerText = props.lessonCode + ' - ' + props.lessonName;
             document.getElementById('det_instructor').innerText = props.instructorName;

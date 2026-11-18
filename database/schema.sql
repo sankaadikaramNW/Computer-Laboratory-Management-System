@@ -153,6 +153,7 @@ CREATE TABLE IF NOT EXISTS allocations (
     instructor_id INT NOT NULL,
     lesson_id INT NOT NULL,
     lab_id INT NOT NULL,
+    batch VARCHAR(100) NULL,
     date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,

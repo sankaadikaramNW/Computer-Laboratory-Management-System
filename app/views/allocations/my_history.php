@@ -73,8 +73,8 @@
                                     <span class="small text-muted"><?php echo e($s->lesson_code); ?></span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-secondary"><?php echo e($s->lab_code); ?></span>
-                                    <span class="d-block small text-muted"><?php echo e($s->lab_name); ?></span>
+                                    <span class="badge bg-primary-subtle text-primary mb-1"><i class="bi bi-people-fill me-1"></i><?php echo e(!empty($s->batch) ? $s->batch : ($s->remarks ?: 'General Batch')); ?></span>
+                                    <span class="d-block small text-muted"><i class="bi bi-building me-1"></i><?php echo e($s->lab_code); ?> - <?php echo e($s->lab_name); ?></span>
                                 </td>
                                 <td class="status-cell"><span class="badge <?php echo $statusClass; ?>"><?php echo $s->session_status; ?></span></td>
                                 <td>

@@ -61,7 +61,10 @@
                                                     </span>
                                                 </div>
                                                 <h6 class="fw-bold mb-1 text-dark"><?php echo e($s->lesson_code); ?>: <?php echo e($s->lesson_name); ?></h6>
-                                                <p class="mb-2 text-muted small"><i class="bi bi-building me-1"></i><?php echo e($s->lab_code); ?> &mdash; <?php echo e($s->lab_name); ?></p>
+                                                <div class="mb-2">
+                                                    <span class="badge bg-primary-subtle text-primary"><i class="bi bi-people-fill me-1"></i><?php echo e(!empty($s->batch) ? $s->batch : ($s->remarks ?: 'General Batch')); ?></span>
+                                                    <span class="small text-muted ms-2"><i class="bi bi-building me-1"></i><?php echo e($s->lab_code); ?> &mdash; <?php echo e($s->lab_name); ?></span>
+                                                </div>
                                                 <div class="p-2 bg-light rounded mb-3" style="font-size: 0.8rem; border-left: 3px solid var(--primary);">
                                                     <strong>Allocated Date:</strong> <?php echo date('l, d M Y', strtotime($s->date)); ?>
                                                 </div>

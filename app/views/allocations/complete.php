@@ -46,6 +46,10 @@
                             <input type="text" class="form-control form-control-clms bg-light" value="<?php echo e($data['alloc']->instructor_trade ?: 'N/A'); ?>" readonly disabled>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label small text-muted mb-1">Class / Course Batch</label>
+                            <input type="text" class="form-control form-control-clms bg-light fw-bold text-primary" value="<?php echo e(!empty($data['alloc']->batch) ? $data['alloc']->batch : ($data['alloc']->remarks ?: 'General Batch')); ?>" readonly disabled>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label small text-muted mb-1">Lesson</label>
                             <input type="text" class="form-control form-control-clms bg-light" value="<?php echo e($data['alloc']->lesson_code . ' - ' . $data['alloc']->lesson_name); ?>" readonly disabled>
                         </div>

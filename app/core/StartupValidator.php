@@ -28,7 +28,7 @@ class StartupValidator {
         'smart_boards' => ['id', 'asset_id', 'brand', 'model', 'installation_date', 'lab_id', 'status', 'created_at', 'updated_at'],
         'lessons' => ['id', 'lesson_code', 'lesson_name', 'trade', 'duration', 'description', 'created_at', 'updated_at'],
         'allocations' => [
-            'id', 'instructor_id', 'lesson_id', 'lab_id', 'date', 'start_time', 'end_time', 
+            'id', 'instructor_id', 'lesson_id', 'lab_id', 'batch', 'date', 'start_time', 'end_time', 
             'remarks', 'session_status', 'instructor_remarks', 'completed_at', 'completed_by', 
             'created_at', 'updated_at', 'camp_id'
         ],
@@ -103,6 +103,16 @@ class StartupValidator {
             // Fetch tables
             $tablesStmt = $pdo->query("SHOW TABLES");
             $existingTables = $tablesStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Auto-migrate: Ensure allocations table has the batch column
+            try {
+                $colCheck = $pdo->query("SHOW COLUMNS FROM `allocations` LIKE 'batch'");
+                if ($colCheck && $colCheck->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE `allocations` ADD COLUMN `batch` VARCHAR(100) NULL AFTER `lab_id`");
+                }
+            } catch (Exception $e) {
+                // Table might not exist yet before initial migration
+            }
 
             // Lowercase mapping for case-insensitivity comparison
             $existingTablesLower = array_map('strtolower', $existingTables);

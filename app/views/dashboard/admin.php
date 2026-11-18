@@ -519,8 +519,12 @@
                 <!-- Session/Allocation Details -->
                 <div id="session_detail_fields">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Laboratory</label>
-                        <div class="fw-semibold text-primary fs-6" id="det_lab"></div>
+                        <label class="form-label small fw-bold text-muted"><i class="bi bi-people-fill text-primary me-1"></i> Class / Course Batch</label>
+                        <div class="fw-bold text-primary fs-6" id="det_batch"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted"><i class="bi bi-door-closed text-secondary me-1"></i> Allocated Laboratory</label>
+                        <div class="fw-semibold text-secondary" id="det_lab"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Course Lesson</label>
@@ -694,10 +698,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('maint_notes').innerText = props.remarks;
             } else {
                 // Show allocation session details
-                document.getElementById('modal_title').innerHTML = "<i class='bi bi-calendar-event text-primary me-2'></i>Lab Allocation Details";
+                document.getElementById('modal_title').innerHTML = "<i class='bi bi-calendar-event text-primary me-2'></i>Class Session Details";
                 document.getElementById('maintenance_detail_fields').classList.add('d-none');
                 document.getElementById('session_detail_fields').classList.remove('d-none');
                 
+                document.getElementById('det_batch').innerText = props.batch || 'General Batch';
                 document.getElementById('det_lab').innerText = props.labCode + ' - ' + props.labName;
                 document.getElementById('det_lesson').innerText = props.lessonCode + ' - ' + props.lessonName;
                 document.getElementById('det_instructor').innerText = props.instructorName;

@@ -100,6 +100,7 @@ class AllocationController extends Controller {
             $instructorId = (int)$_POST['instructor_id'];
             $lessonId = (int)$_POST['lesson_id'];
             $labId = (int)$_POST['lab_id'];
+            $batch = trim($_POST['batch'] ?? '');
             $date = trim($_POST['date']);
             $startTime = trim($_POST['start_time']);
             $endTime = trim($_POST['end_time']);
@@ -146,6 +147,7 @@ class AllocationController extends Controller {
                 'instructor_id' => $instructorId,
                 'lesson_id' => $lessonId,
                 'lab_id' => $labId,
+                'batch' => $batch,
                 'date' => $date,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
@@ -201,6 +203,7 @@ class AllocationController extends Controller {
             $instructorId = (int)$_POST['instructor_id'];
             $lessonId = (int)$_POST['lesson_id'];
             $labId = (int)$_POST['lab_id'];
+            $batch = trim($_POST['batch'] ?? '');
             $date = trim($_POST['date']);
             $startTime = trim($_POST['start_time']);
             $endTime = trim($_POST['end_time']);
@@ -246,6 +249,7 @@ class AllocationController extends Controller {
                 'instructor_id' => $instructorId,
                 'lesson_id' => $lessonId,
                 'lab_id' => $labId,
+                'batch' => $batch,
                 'date' => $date,
                 'start_time' => $startTime,
                 'end_time' => $endTime,
@@ -365,9 +369,11 @@ class AllocationController extends Controller {
                 $eventType = 'Scheduled Session';
             }
             
+            $batchDisplay = !empty($a->batch) ? $a->batch : (!empty($a->remarks) ? $a->remarks : 'General Batch');
+
             $events[] = [
                 'id' => $a->id,
-                'title' => "{$a->lab_code} - {$a->lesson_code} ({$a->instructor_rank} {$a->instructor_name})",
+                'title' => "{$batchDisplay} - {$a->lesson_code} ({$a->instructor_rank} {$a->instructor_name})",
                 'start' => "{$a->date}T{$a->start_time}",
                 'end' => "{$a->date}T{$a->end_time}",
                 'backgroundColor' => $color,
@@ -376,6 +382,7 @@ class AllocationController extends Controller {
                 'extendedProps' => [
                     'isMaintenance' => false,
                     'eventType' => $eventType,
+                    'batch' => $batchDisplay,
                     'labName' => $a->lab_name,
                     'labCode' => $a->lab_code,
                     'labId' => $a->lab_id,

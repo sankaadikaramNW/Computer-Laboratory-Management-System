@@ -15,7 +15,8 @@
             <thead>
                 <tr>
                     <th>Camp Location</th>
-                    <th>Lab Code</th>
+                    <th>Class Batch</th>
+                    <th>Laboratory</th>
                     <th>Lesson / Syllabus</th>
                     <th>Instructor Assigned</th>
                     <th>Scheduled Date</th>
@@ -29,6 +30,7 @@
                     <?php foreach($data['allocations'] as $a): ?>
                         <tr>
                             <td><span class="badge bg-info-light text-info fw-semibold"><i class="bi bi-geo-alt-fill me-1"></i><?php echo e($a->camp_name ?: 'Global'); ?></span></td>
+                            <td><span class="badge bg-primary-subtle text-primary fw-semibold"><i class="bi bi-people-fill me-1"></i><?php echo e(!empty($a->batch) ? $a->batch : ($a->remarks ?: 'General Batch')); ?></span></td>
                             <td><span class="badge bg-secondary"><?php echo e($a->lab_code); ?> - <?php echo e($a->lab_name); ?></span></td>
                             <td>
                                 <div>
@@ -46,6 +48,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary edit-btn" 
                                             data-id="<?php echo $a->id; ?>"
                                             data-labid="<?php echo $a->lab_id; ?>"
+                                            data-batch="<?php echo e(!empty($a->batch) ? $a->batch : ''); ?>"
                                             data-lessonid="<?php echo $a->lesson_id; ?>"
                                             data-instructorid="<?php echo $a->instructor_id; ?>"
                                             data-date="<?php echo e($a->date); ?>"
@@ -66,7 +69,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">No scheduled allocations found in system.</td>
+                        <td colspan="9" class="text-center py-4 text-muted">No scheduled allocations found in system.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -151,8 +154,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="add_remarks" class="form-label small fw-semibold">Remarks / Batch / Notes</label>
-                        <textarea name="remarks" id="add_remarks" class="form-control form-control-clms" rows="2" placeholder="e.g. IT Cpl Course, Batch 45"></textarea>
+                        <label for="add_batch" class="form-label small fw-semibold">Class / Course Batch</label>
+                        <input type="text" name="batch" id="add_batch" class="form-control form-control-clms" placeholder="e.g. IT Cpl Course, Batch 45 or NVQ Batch 2026/1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="add_remarks" class="form-label small fw-semibold">Remarks / Notes</label>
+                        <textarea name="remarks" id="add_remarks" class="form-control form-control-clms" rows="2" placeholder="Optional notes..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-color">
@@ -239,7 +247,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="edit_remarks" class="form-label small fw-semibold">Remarks / Batch / Notes</label>
+                        <label for="edit_batch" class="form-label small fw-semibold">Class / Course Batch</label>
+                        <input type="text" name="batch" id="edit_batch" class="form-control form-control-clms" placeholder="e.g. IT Cpl Course, Batch 45" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_remarks" class="form-label small fw-semibold">Remarks / Notes</label>
                         <textarea name="remarks" id="edit_remarks" class="form-control form-control-clms" rows="2"></textarea>
                     </div>
                 </div>
@@ -369,6 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_end_time').value = end.substring(0, 5);
             
             document.getElementById('edit_remarks').value = this.getAttribute('data-remarks');
+            document.getElementById('edit_batch').value = this.getAttribute('data-batch') || '';
         });
     });
 });
