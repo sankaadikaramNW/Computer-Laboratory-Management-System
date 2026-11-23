@@ -40,6 +40,10 @@
                 <i class="bi bi-people-fill mt-1" style="color:rgba(255,255,255,0.75);font-size:1.3rem;"></i>
                 <span style="color:rgba(255,255,255,0.8);font-size:1.05rem;">Manage instructors and syllabus lessons</span>
             </div>
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-calendar3-range mt-1" style="color:rgba(255,255,255,0.75);font-size:1.3rem;"></i>
+                <span style="color:rgba(255,255,255,0.8);font-size:1.05rem;">Public timetable forecast &amp; schedule verification</span>
+            </div>
         </div>
     </div>
 
@@ -93,6 +97,18 @@
                     <button type="submit" class="btn btn-primary py-2" style="font-size:0.95rem;letter-spacing:0.3px;">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                     </button>
+                </div>
+
+                <div class="position-relative my-3 text-center">
+                    <hr class="text-muted" style="opacity:0.25;">
+                    <span class="position-absolute top-50 start-50 translate-middle px-2 small text-muted" style="background:var(--bg-card, #ffffff);">OR GUEST ACCESS</span>
+                </div>
+
+                <div class="mb-3">
+                    <a href="<?php echo URLROOT; ?>roster" class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2" style="font-weight: 500; font-size: 0.92rem; border-width: 1.5px;">
+                        <i class="bi bi-calendar3-range"></i>
+                        <span>Public Timetable &amp; Schedule Confirmation</span>
+                    </a>
                 </div>
 
                 <div class="text-center">

@@ -98,6 +98,11 @@
                         <i class="bi bi-calendar3"></i> Interactive Calendar
                     </a>
                 </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'roster') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>roster" target="_blank" class="sidebar-link">
+                        <i class="bi bi-calendar3-range"></i> Public Timetable <i class="bi bi-box-arrow-up-right ms-auto small text-muted"></i>
+                    </a>
+                </li>
 
                 <li class="sidebar-menu-header">Support Tickets</li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'requests') ? 'active' : ''; ?>">
@@ -220,6 +225,11 @@
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'calendar') ? 'active' : ''; ?>">
                     <a href="<?php echo URLROOT; ?>allocation/calendar" class="sidebar-link">
                         <i class="bi bi-calendar3"></i> School Calendar
+                    </a>
+                </li>
+                <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'roster') ? 'active' : ''; ?>">
+                    <a href="<?php echo URLROOT; ?>roster" target="_blank" class="sidebar-link">
+                        <i class="bi bi-calendar3-range"></i> Public Timetable <i class="bi bi-box-arrow-up-right ms-auto small text-muted"></i>
                     </a>
                 </li>
                 <li class="sidebar-item <?php echo (isset($data['active_menu']) && $data['active_menu'] === 'my_history') ? 'active' : ''; ?>">

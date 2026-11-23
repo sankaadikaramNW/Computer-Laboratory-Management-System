@@ -30,7 +30,7 @@ class AllocationModel extends Model {
      * Get allocations inside a date range (for FullCalendar)
      */
     public function getAllocationsByDateRange($start, $end, $campId = null) {
-        $sql = "SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, i.full_name as instructor_name, i.rank as instructor_rank, les.lesson_name, les.lesson_code 
+        $sql = "SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, i.full_name as instructor_name, i.rank as instructor_rank, i.service_no as instructor_service_no, les.lesson_name, les.lesson_code 
                 FROM allocations a 
                 JOIN laboratories l ON a.lab_id = l.id 
                 LEFT JOIN camps c ON a.camp_id = c.id
@@ -47,6 +47,77 @@ class AllocationModel extends Model {
             $this->db->bind(':camp_id', $campId);
         }
         return $this->db->resultSet();
+    }
+
+    /**
+     * Search public roster allocations for confirmation lookup
+     */
+    public function searchPublicRoster($query = '', $date = null, $campId = null, $labId = null) {
+        $sql = "SELECT a.*, l.lab_name, l.lab_code, c.name as camp_name, 
+                       i.full_name as instructor_name, i.rank as instructor_rank, i.service_no as instructor_service_no, i.trade as instructor_trade,
+                       les.lesson_name, les.lesson_code, les.trade as lesson_trade, les.duration as lesson_duration
+                FROM allocations a 
+                JOIN laboratories l ON a.lab_id = l.id 
+                LEFT JOIN camps c ON a.camp_id = c.id
+                JOIN instructors i ON a.instructor_id = i.id 
+                JOIN lessons les ON a.lesson_id = les.id 
+                WHERE 1=1";
+
+        if (!empty($query)) {
+            $sql .= " AND (
+                a.batch LIKE :q OR 
+                i.full_name LIKE :q OR 
+                i.service_no LIKE :q OR 
+                les.lesson_name LIKE :q OR 
+                les.lesson_code LIKE :q OR 
+                l.lab_code LIKE :q OR 
+                l.lab_name LIKE :q OR
+                a.remarks LIKE :q
+            )";
+        }
+        if (!empty($date)) {
+            $sql .= " AND a.date = :date";
+        }
+        if (!empty($campId)) {
+            $sql .= " AND a.camp_id = :camp_id";
+        }
+        if (!empty($labId)) {
+            $sql .= " AND a.lab_id = :lab_id";
+        }
+        $sql .= " ORDER BY a.date ASC, a.start_time ASC LIMIT 60";
+
+        $this->db->query($sql);
+        if (!empty($query)) {
+            $this->db->bind(':q', '%' . $query . '%');
+        }
+        if (!empty($date)) {
+            $this->db->bind(':date', $date);
+        }
+        if (!empty($campId)) {
+            $this->db->bind(':camp_id', $campId);
+        }
+        if (!empty($labId)) {
+            $this->db->bind(':lab_id', $labId);
+        }
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Get single public allocation detail for schedule confirmation
+     */
+    public function getPublicAllocationById($id) {
+        $this->db->query("SELECT a.*, l.lab_name, l.lab_code, l.location as lab_location, l.capacity as lab_capacity,
+                                 c.name as camp_name, c.code as camp_code,
+                                 i.full_name as instructor_name, i.rank as instructor_rank, i.service_no as instructor_service_no, i.trade as instructor_trade,
+                                 les.lesson_name, les.lesson_code, les.duration as lesson_duration, les.trade as lesson_trade
+                          FROM allocations a 
+                          JOIN laboratories l ON a.lab_id = l.id 
+                          LEFT JOIN camps c ON a.camp_id = c.id
+                          JOIN instructors i ON a.instructor_id = i.id 
+                          JOIN lessons les ON a.lesson_id = les.id 
+                          WHERE a.id = :id");
+        $this->db->bind(':id', $id);
+        return $this->db->single();
     }
 
     /**
